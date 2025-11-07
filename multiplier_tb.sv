@@ -15,16 +15,21 @@ module fsm_tb;
   fsm dut (
     .clk(clk),
     .rst(rst),
+
     .EN_mult(EN_mult),
     .EN_writeMem(EN_writeMem),
     .writeMem_addr(writeMem_addr),
+
     .mult_input0(mult_input0),
     .mult_input1(mult_input1),
     .writeMem_val(writeMem_val),
+
     .RDY_mult(RDY_mult),
+
     .EN_blockRead(EN_blockRead),
     .VALID_memVal(VALID_memVal),
     .memVal_data(memVal_data),
+
     .EN_readMem(EN_readMem),
     .readMem_addr(readMem_addr),
     .readMem_val(readMem_val)
@@ -42,8 +47,9 @@ module fsm_tb;
     #10 mult_input0 = 1; mult_input1 = 1;
     #10 mult_input0 = 2; mult_input1 = 2;
     #10 mult_input0 = 3; mult_input1 = 3;
-    #700; 
-    #10 $stop;
+    #600; EN_mult = 0; 
+    #50;
+    $stop;
   end
 endmodule
 
