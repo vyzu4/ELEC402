@@ -1,107 +1,108 @@
-typedef enum logic [1:0] { 
-  S_IDLE, 
-  S_WRITE, 
-  S_FULL, 
-  S_READ 
+typedef enum logic [1:0] {
+    IDLE  = 2'b00,
+    WRITE = 2'b01,
+    FULL = 2'b10
 } state_t;
 
-module multiplier #(
-  parameter int DEPTH     = 64,
-  parameter int LOGDEPTH  = 6,           // log2(DEPTH) = 6 for 64
-  parameter int DATAW     = 32,          // N+1 bits in the figure; use 32 for 16x16 product
-  parameter bit SIGNED    = 1'b1,
-  parameter int OUT_SHIFT = 0
-)(
-  input  logic                clk,
-  // input  logic                rst_n,
+module fsm #(
+) (
+    input  logic                clk,
+    input  logic                rst,      
 
-  input  logic                EN_mult,                 // enable to accept new multiplies
-  output logic                EN_writeMem,             // write enable (ACTIVE-HIGH)
-  output logic [LOGDEPTH-1:0] writeMem_addr,           // write address
+    input  logic                EN_mult, 
+    output logic                EN_writeMem,    
+    output logic [6:0]        writeMem_addr, 
 
-  input  logic [15:0]         mult_input0,
-  input  logic [15:0]         mult_input1,
-  output logic [DATAW-1:0]    writeMem_val,            // write data
+    input  logic [15:0]         mult_input0,
+    input  logic [15:0]         mult_input1,
+    output logic [32-1:0]       writeMem_val,  
 
-  output logic                RDY_mult,                // ready for new inputs
+    output logic                RDY_mult,              
+     
+    input  logic                EN_blockRead,            // request to drain after FULL
+    output logic                VALID_memVal,            // valid flag for memVal_data
+    output logic [32-1:0]       memVal_data,             // streamed data (from memory)
 
-  input  logic                EN_blockRead,            // request to drain after FULL
-  output logic                VALID_memVal,            // valid flag for memVal_data
-  output logic [DATAW-1:0]    memVal_data,             // streamed data (from memory)
-
-  output logic                EN_readMem,              // read enable (ACTIVE-HIGH)
-  output logic [LOGDEPTH-1:0] readMem_addr,            // read address
-  input  logic [DATAW-1:0]    readMem_val              // registered read data from memory
+    output logic                EN_readMem,              // read enable (ACTIVE-HIGH)
+    output logic [6-1:0]        readMem_addr,            // read address
+    input  logic [32-1:0]       readMem_val              // registered read data from memory      
 );
 
+    state_t state, next_state;
 
-  //////////////////////////
-  // extra signals
-  //////////////////////////
+    // logic first_writeMem_addr = 1'b0;
 
+    logic [32-1: 0] product;
 
-state_t state, next_state;
-logic first_write = 0'b0;
-  ////////////////////////////
+    always_comb begin
+        product = mult_input0 * mult_input1;
+    end
 
-  // assign writeMem_val = mult_input0 * mult_input1; //add buffer before outputting, need clk
+    // next state logic
+    always_ff @(posedge clk) begin
+        next_state = state; // default hold
+        unique case (state)
 
-always_ff @(posedge clk) begin //maybe only on a clk edge TODO: make into always_ff(?) and put in sensitivity list
-    // default values
-    //next_state = state; //todo: do this ONLY on a clk edge
+            IDLE: begin
+                RDY_mult = 1'b1;
+                EN_readMem= 1'b0;
+                writeMem_addr = 1'b0;
 
+                if (EN_mult == 1'b1)
+                    next_state = WRITE;
+                else
+                    next_state = IDLE;
+            end
 
-//    EN_writeMem     = 1'b0;
-//    writeMem_addr   = 6'b0;
-//    writeMem_val    = 32'b0;
-//
-//    RDY_mult        = 1'b1;
-//
-//    EN_readMem      = 1'b0;
-//    readMem_addr    = 6'b0;
-//
-    // VALID_memVal    = 
-    // memVal_data     = 
+            WRITE: begin
+                RDY_mult = 1'b1;
+                EN_writeMem = 1'b1;
+                writeMem_addr = writeMem_addr + 1;
+                
+                if (EN_mult == 1'b0)
+                    next_state = IDLE;
+                else if (writeMem_addr == 6'd61)
+                    next_state = FULL;
+                else 
+                    next_state = WRITE;
+            end
 
+            FULL: begin
+                RDY_mult = 1'b0;
 
-    case (state)
-      S_IDLE: begin
-        RDY_mult   = 1'b1;
-	      EN_readMem= 1'b0;
+                if (writeMem_addr <= 6'd62) begin
+                    writeMem_addr = writeMem_addr + 1;
+                    EN_writeMem=1'b1;
 
-        if(EN_mult==1'b1) begin
-          //todo: 
-          next_state = S_WRITE;
-        end else begin
-          next_state = S_IDLE;
-        end
-      end
+                    next_state = FULL;
+                end 
+                else begin
+                    EN_writeMem=1'b0;
 
-      S_WRITE: begin //todo: CURRENTLY assuming enable bit is HIGH until
-        RDY_mult   = 1'b1;
-        if (writeMem_addr == 6'd61) begin //may be different value
-          next_state = S_FULL;
-        end else begin
-		    next_state= S_WRITE;
-	    end
+                    next_state = IDLE;
+                end
 
-      writeMem_addr = !first_write ?  0'b0 : writeMem_addr+1;
-      first_write=1'b1;
-      end
+                // if (!EN_mult)
+                //     next_state = IDLE;
+                // else
+                //     next_state = FULL;
+            end
 
-      S_FULL: begin
-        RDY_mult = 1'b0;
-        if (writeMem_addr!=6'd63) begin
-          writeMem_addr = writeMem_addr + 1;
-          EN_writeMem=1'b1;// this should STAY on, not turn on
-        end else begin
-          EN_writeMem=1'b0;
-        end
-      end
+            default: next_state = IDLE;
+        endcase
+    end
 
-      default: next_state = S_IDLE;
-    endcase
-
-  end
+    // State register (sync reset)
+    always_ff @(posedge clk) begin
+        if (!rst)
+            state <= IDLE;
+        else
+            // transition to next state
+            state <= next_state;
+            // delay reg for multiplication product
+            writeMem_val <= product;
+    end
 
 endmodule
+
+
