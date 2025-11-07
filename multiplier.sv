@@ -11,7 +11,7 @@ module fsm #(
 
     input  logic                EN_mult, 
     output logic                EN_writeMem,    
-    output logic [6:0]        writeMem_addr, 
+    output logic [6:0]          writeMem_addr, 
 
     input  logic [15:0]         mult_input0,
     input  logic [15:0]         mult_input1,
@@ -19,13 +19,13 @@ module fsm #(
 
     output logic                RDY_mult,              
      
-    input  logic                EN_blockRead,            // request to drain after FULL
-    output logic                VALID_memVal,            // valid flag for memVal_data
-    output logic [32-1:0]       memVal_data,             // streamed data (from memory)
+    input  logic                EN_blockRead,            
+    output logic                VALID_memVal,            
+    output logic [32-1:0]       memVal_data,             
 
-    output logic                EN_readMem,              // read enable (ACTIVE-HIGH)
-    output logic [6-1:0]        readMem_addr,            // read address
-    input  logic [32-1:0]       readMem_val              // registered read data from memory      
+    output logic                EN_readMem,              
+    output logic [6-1:0]        readMem_addr,            
+    input  logic [32-1:0]       readMem_val                
 );
 
     state_t state, next_state;
@@ -41,6 +41,7 @@ module fsm #(
     // next state logic
     always_ff @(posedge clk) begin
         next_state = state; // default hold
+        
         unique case (state)
 
             IDLE: begin
@@ -48,20 +49,30 @@ module fsm #(
                 EN_readMem= 1'b0;
                 writeMem_addr = 1'b0;
 
-                if (EN_mult == 1'b1)
+                if (EN_mult == 1'b1) begin
+                    EN_writeMem = 1'b1; // needs 1 cycle delay
                     next_state = WRITE;
-                else
+                end
+                else begin
+                    EN_writeMem = 1'b0;
                     next_state = IDLE;
+                end
             end
 
             WRITE: begin
-                RDY_mult = 1'b1;
                 EN_writeMem = 1'b1;
                 writeMem_addr = writeMem_addr + 1;
-                
+
+                // determine value of RDY_mult
+                if (writeMem_addr <= 6'd61)
+                    RDY_mult = 1'b1;
+                else
+                    RDY_mult = 1'b0;
+
+                // determine next state
                 if (EN_mult == 1'b0)
                     next_state = IDLE;
-                else if (writeMem_addr == 6'd61)
+                else if (writeMem_addr == 6'd63)
                     next_state = FULL;
                 else 
                     next_state = WRITE;
@@ -70,10 +81,7 @@ module fsm #(
             FULL: begin
                 RDY_mult = 1'b0;
 
-                if (writeMem_addr <= 6'd62) begin
-                    writeMem_addr = writeMem_addr + 1;
-                    EN_writeMem=1'b1;
-
+                if (writeMem_addr == 6'd63) begin
                     next_state = FULL;
                 end 
                 else begin
@@ -81,11 +89,6 @@ module fsm #(
 
                     next_state = IDLE;
                 end
-
-                // if (!EN_mult)
-                //     next_state = IDLE;
-                // else
-                //     next_state = FULL;
             end
 
             default: next_state = IDLE;
