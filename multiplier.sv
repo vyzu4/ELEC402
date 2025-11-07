@@ -81,12 +81,12 @@ module fsm #(
             FULL: begin
                 RDY_mult = 1'b0;
 
-                if (writeMem_addr == 6'd63) begin
+                if (EN_mult == 1'b1) begin
+                    EN_writeMem=1'b0;
                     next_state = FULL;
                 end 
                 else begin
                     EN_writeMem=1'b0;
-
                     next_state = IDLE;
                 end
             end
