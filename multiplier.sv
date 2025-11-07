@@ -1,7 +1,8 @@
 typedef enum logic [1:0] {
     IDLE  = 2'b00,
-    WRITE = 2'b01,
-    FULL = 2'b10
+    PREP  = 2'b01,
+    WRITE = 2'b10,
+    FULL = 2'b11
 } state_t;
 
 module fsm #(
@@ -51,10 +52,21 @@ module fsm #(
 
                 if (EN_mult == 1'b1) begin
                     EN_writeMem = 1'b1; // needs 1 cycle delay
-                    next_state = WRITE;
+                    next_state = PREP;
                 end
                 else begin
                     EN_writeMem = 1'b0;
+                    next_state = IDLE;
+                end
+            end
+
+            PREP: begin
+                if (EN_mult == 1'b1) begin
+                    // EN_writeMem = 1'b1; // needs 1 cycle delay
+                    next_state = WRITE;
+                end
+                else begin
+                    // EN_writeMem = 1'b0;
                     next_state = IDLE;
                 end
             end
