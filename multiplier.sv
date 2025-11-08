@@ -1,6 +1,6 @@
 typedef enum logic [1:0] {
     IDLE  = 2'b00,
-    PREP  = 2'b01,
+    // PREP  = 2'b01,
     WRITE = 2'b10,
     FULL = 2'b11
 } state_t;
@@ -31,7 +31,7 @@ module fsm #(
 
     state_t state, next_state;
 
-    // logic first_writeMem_addr = 1'b0;
+    logic first_write = 1'b0;
 
     logic [32-1: 0] product;
 
@@ -41,7 +41,13 @@ module fsm #(
 
     // next state logic
     always_ff @(posedge clk) begin
-        next_state = state; // default hold
+        // next_state = state; // default hold
+
+        if (!rst)
+            state = IDLE;
+        else
+            // transition to next state
+            state = next_state;
         
         unique case (state)
 
@@ -51,43 +57,40 @@ module fsm #(
                 writeMem_addr = 1'b0;
 
                 if (EN_mult == 1'b1) begin
-                    EN_writeMem = 1'b1; // needs 1 cycle delay
-                    next_state = PREP;
-                end
-                else begin
-                    EN_writeMem = 1'b0;
-                    next_state = IDLE;
-                end
-            end
-
-            PREP: begin
-                if (EN_mult == 1'b1) begin
-                    // EN_writeMem = 1'b1; // needs 1 cycle delay
                     next_state = WRITE;
                 end
                 else begin
-                    // EN_writeMem = 1'b0;
                     next_state = IDLE;
                 end
             end
 
             WRITE: begin
                 EN_writeMem = 1'b1;
-                writeMem_addr = writeMem_addr + 1;
 
                 // determine value of RDY_mult
-                if (writeMem_addr <= 6'd61)
+                if (writeMem_addr < 6'd61)
                     RDY_mult = 1'b1;
                 else
                     RDY_mult = 1'b0;
 
-                // determine next state
-                if (EN_mult == 1'b0)
+                // determine EN_writeMem and next state
+                if (EN_mult == 1'b0) begin
+                    EN_writeMem = 1'b0;
                     next_state = IDLE;
-                else if (writeMem_addr == 6'd63)
-                    next_state = FULL;
-                else 
-                    next_state = WRITE;
+                end
+                else begin
+                    EN_writeMem = 1'b1;
+
+                    if (writeMem_addr < 6'd62)
+                        next_state = WRITE;
+                    else
+                        next_state = FULL;
+                end
+
+                // determine value of writeMem_addr
+                writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
+                first_write = 1'b1;
+
             end
 
             FULL: begin
@@ -109,13 +112,7 @@ module fsm #(
 
     // State register (sync reset)
     always_ff @(posedge clk) begin
-        if (!rst)
-            state <= IDLE;
-        else
-            // transition to next state
-            state <= next_state;
-            // delay reg for multiplication product
-            writeMem_val <= product;
+        writeMem_val = product;
     end
 
 endmodule
