@@ -1,18 +1,28 @@
 module fsm_tb;
-  logic                 clk;
-  logic                 rst;
+  // multiplier i/o
+    logic                clk;
+    logic                rst;      
 
-  logic                 EN_mult;
+    logic                EN_mult;
+    logic                EN_writeMem; 
+    logic [6:0]          writeMem_addr;
 
-  logic [15:0]          mult_input0;
-  logic [15:0]          mult_input1;
+    logic [15:0]         mult_input0;
+    logic [15:0]         mult_input1;
+    logic [32-1:0]       writeMem_val;  
 
-  logic                 EN_blockRead;
+    logic                RDY_mult;             
+     
+    logic                EN_blockRead;            
+    logic                VALID_memVal;            
+    logic [32-1:0]       memVal_data;             
 
-  logic [32-1:0]        readMem_val;
+    logic                EN_readMem;              
+    logic [6-1:0]        readMem_addr;            
+    logic [32-1:0]       readMem_val; 
 
-  // Instantiate DUT
-  fsm dut (
+  // Instantiate multiplier DUT
+  multiplier multiplier_dut (
     .clk(clk),
     .rst(rst),
 
@@ -35,22 +45,63 @@ module fsm_tb;
     .readMem_val(readMem_val)
   );
 
+  // Instantiate memory_wrapper_2port DUT
+  memory_wrapper_2port mw2p_dut (
+    .clkA(clk),
+    .clkB(clk),
+
+    .aA(writeMem_addr),
+    .aB(readMem_addr),
+
+    .cenA(EN_writeMem),
+    .cenB(EN_readMem),
+
+    .d(writeMem_val),
+    .q(readMem_val)
+  );
+
+  // Instantiate registerArray DUT
+  registerArray mra_dut (
+    .clkA(clk),
+    .clkB(clk),
+
+    .aA(writeMem_addr),
+    .aB(readMem_addr),
+
+    .cenA(EN_writeMem),
+    .cenB(EN_readMem),
+
+    .d(writeMem_val),
+    .q(readMem_val)
+  );
+
   // Clock generator
   initial clk = 0;
   always #5 clk = ~clk;
 
-  // Stimulus
+  // Stimulus to fsm
   initial begin
     rst = 0; EN_mult = 0; 
     #10 rst = 1;                // release reset
     #10 EN_mult = 1;            // start writing
-    #10 mult_input0 = 1; mult_input1 = 1;
-    #10 mult_input0 = 2; mult_input1 = 2;
-    #10 mult_input0 = 3; mult_input1 = 3;
-    #600; EN_mult = 0; 
+    #10 mult_input0 = 1; mult_input1 = 9;
+    #10 mult_input0 = 2; mult_input1 = 8;
+    #10 mult_input0 = 3; mult_input1 = 7;
+    #10 mult_input0 = 4; mult_input1 = 6;
+    #10 mult_input0 = 5; mult_input1 = 5;
+    #10 mult_input0 = 6; mult_input1 = 4;
+    #10 mult_input0 = 7; mult_input1 = 3;
+    #10 mult_input0 = 8; mult_input1 = 2;
+    #10 mult_input0 = 9; mult_input1 = 1;
+    #600; EN_mult = 0; // stop writing
     #50;
     $stop;
   end
+
+
+
+
+  
 endmodule
 
 
