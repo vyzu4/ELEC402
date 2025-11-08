@@ -31,7 +31,7 @@ module multiplier #(
 
     state_t state, next_state;
 
-    logic first_write = 1'b0; // flag
+    logic first_write; // flag
     logic [32-1: 0] product;
 
     // multiplication logic
@@ -57,6 +57,8 @@ module multiplier #(
         unique case (state)
 
             IDLE: begin
+                first_write = 1'b0;
+
                 RDY_mult = 1'b1;
                 EN_readMem= 1'b0;
                 writeMem_addr = 1'b0;
