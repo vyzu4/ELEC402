@@ -1,18 +1,18 @@
 typedef enum logic [1:0] {
     IDLE  = 2'b00,
-    // PREP  = 2'b01,
-    WRITE = 2'b10,
-    FULL = 2'b11
+    WRITE = 2'b01,
+    FULL = 2'b10
+    // READ = 2'b11
 } state_t;
 
-module fsm #(
+module multiplier #(
 ) (
     input  logic                clk,
     input  logic                rst,      
 
     input  logic                EN_mult, 
     output logic                EN_writeMem,    
-    output logic [6:0]          writeMem_addr, 
+    output logic [6-1:0]          writeMem_addr, 
 
     input  logic [15:0]         mult_input0,
     input  logic [15:0]         mult_input1,
@@ -31,15 +31,20 @@ module fsm #(
 
     state_t state, next_state;
 
-    logic first_write = 1'b0;
-
+    logic first_write = 1'b0; // flag
     logic [32-1: 0] product;
 
+    // multiplication logic
     always_comb begin
         product = mult_input0 * mult_input1;
     end
 
-    // next state logic
+    // writeMem_val
+    always_ff @(posedge clk) begin
+        writeMem_val = product;
+    end
+
+    // state transition/behaviour logic
     always_ff @(posedge clk) begin
         // next_state = state; // default hold
 
@@ -90,7 +95,6 @@ module fsm #(
                 // determine value of writeMem_addr
                 writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
                 first_write = 1'b1;
-
             end
 
             FULL: begin
@@ -108,11 +112,6 @@ module fsm #(
 
             default: next_state = IDLE;
         endcase
-    end
-
-    // State register (sync reset)
-    always_ff @(posedge clk) begin
-        writeMem_val = product;
     end
 
 endmodule
