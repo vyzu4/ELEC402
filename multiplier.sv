@@ -2,9 +2,8 @@ typedef enum logic [2:0] {
     IDLE_WRITE  = 3'b000,
     WRITE = 3'b001,
     FULL =  3'b010,
-    // IDLE_READ =  3'b011,
-    READ = 3'b100,
-    EMPTY = 3'b101
+    READ = 3'b011,
+    EMPTY = 3'b100
 } state_t;
 
 module multiplier #(
@@ -16,35 +15,36 @@ module multiplier #(
     output logic                EN_writeMem,    
     output logic [6-1:0]        writeMem_addr, 
 
-    input  logic [15:0]         mult_input0,
-    input  logic [15:0]         mult_input1,
-    output logic [32-1:0]       writeMem_val,  
+    input  logic [16-1:0]       mult_input0,
+    input  logic [16-1:0]       mult_input1,
+    output logic [16-1:0]       writeMem_val,  
 
     output logic                RDY_mult,              
      
     input  logic                EN_blockRead,            
     output logic                VALID_memVal,            
-    output logic [32-1:0]       memVal_data,             
+    output logic [16-1:0]       memVal_data,             
 
     output logic                EN_readMem,              
     output logic [6-1:0]        readMem_addr,            
-    input  logic [32-1:0]       readMem_val                
+    input  logic [16-1:0]       readMem_val                
 );
 
     state_t state, next_state;
 
-    logic first_write; // flag
-    logic first_read; // flag
-    logic first_VALID_memVal; // flag
+    // flags
+    logic first_write; 
+    logic first_read; 
+    logic first_VALID_memVal; 
 
-    logic [32-1: 0] product;
+    logic [16-1: 0] product;
 
     // multiplication logic
     always_comb begin
         product = mult_input0 * mult_input1;
     end
 
-    // writeMem_val
+    // clocked multiplication logic
     always_ff @(posedge clk) begin
         writeMem_val = product;
     end
