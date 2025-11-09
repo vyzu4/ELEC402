@@ -1,5 +1,5 @@
 typedef enum logic [2:0] {
-    IDLE_WRITE  = 3'b000,
+    IDLE  = 3'b000,
     WRITE = 3'b001,
     FULL =  3'b010,
     READ = 3'b011,
@@ -11,31 +11,31 @@ module multiplier #(
     input  logic                clk,
     input  logic                rst,      
 
-    input  logic                EN_mult, 
-    output logic                EN_writeMem,    
-    output logic [6-1:0]        writeMem_addr, 
+    input  logic                EN_mult, // high to start multiplication
+    output logic                EN_writeMem, // high to write to mem   
+    output logic [6-1:0]        writeMem_addr, // addr to write to
 
     input  logic [16-1:0]       mult_input0,
     input  logic [16-1:0]       mult_input1,
     output logic [16-1:0]       writeMem_val,  
 
-    output logic                RDY_mult,              
+    output logic                RDY_mult, // ready to multiply             
      
-    input  logic                EN_blockRead,            
-    output logic                VALID_memVal,            
-    output logic [16-1:0]       memVal_data,             
+    input  logic                EN_blockRead, // high to read from mem block           
+    output logic                VALID_memVal, // high for valid mem val           
+    output logic [16-1:0]       memVal_data, // mem data            
 
-    output logic                EN_readMem,              
-    output logic [6-1:0]        readMem_addr,            
-    input  logic [16-1:0]       readMem_val                
+    output logic                EN_readMem, // high to start reading mem             
+    output logic [6-1:0]        readMem_addr, // addr to read from           
+    input  logic [16-1:0]       readMem_val // data read from mem               
 );
 
     state_t state, next_state;
 
     // flags
-    logic first_write; 
-    logic first_read; 
-    logic first_VALID_memVal; 
+    logic first_write = 1'b0; 
+    logic first_read = 1'b0; 
+    logic first_VALID_memVal = 1'b0; 
 
     logic [16-1: 0] product;
 
@@ -54,29 +54,36 @@ module multiplier #(
         // next_state = state; // default hold
 
         if (!rst)
-            state = IDLE_WRITE;
+            state = IDLE;
         else
             // transition to next state
             state = next_state;
         
         unique case (state)
 
-            IDLE_WRITE: begin
-                first_write = 1'b0;
-
+            IDLE: begin
+                first_write = 1'b0; //set flag
+                
+                // initialize write signals
                 RDY_mult = 1'b1;
                 EN_readMem= 1'b0;
                 writeMem_addr = 1'b0;
 
+                // initialize write signals
+                readMem_addr = 1'b0;
+                VALID_memVal = 1'b0; 
+
+                // determine next state
                 if (EN_mult == 1'b1) begin
                     next_state = WRITE;
                 end
                 else begin
-                    next_state = IDLE_WRITE;
+                    next_state = IDLE;
                 end
             end
 
             WRITE: begin
+                // initialize write signals
                 EN_writeMem = 1'b1;
 
                 // determine value of RDY_mult
@@ -88,7 +95,7 @@ module multiplier #(
                 // determine EN_writeMem and next state
                 if (EN_mult == 1'b0) begin
                     EN_writeMem = 1'b0;
-                    next_state = IDLE_WRITE;
+                    next_state = IDLE;
                 end
                 else begin
                     EN_writeMem = 1'b1;
@@ -105,17 +112,17 @@ module multiplier #(
             end
 
             FULL: begin
-                // write related signals
+                // initialize write signals
                 RDY_mult = 1'b0;
 
-                first_read = 1'b0; // flag
+                first_read = 1'b0; // set flag
 
                 // read related signals
                 EN_writeMem = 1'b0;
                 EN_readMem = 1'b0;
                 readMem_addr = 1'b0;
-                VALID_memVal = 1'b0;
 
+                // determine next state
                 if (EN_mult == 1'b1) begin
                     next_state = FULL;
                 end 
@@ -133,13 +140,13 @@ module multiplier #(
                 // set flag
                 first_VALID_memVal = 1'b0;
                 
-                // set states
+                // determine next state
                 if (readMem_addr < 6'd62)
                     next_state = READ;
                 else
                     next_state = EMPTY;
 
-                // set value for VALID_memVal
+                // determine value for VALID_memVal
                 if (EN_readMem == 1'b1)
                     VALID_memVal = 1'b1;
                 else
@@ -148,17 +155,24 @@ module multiplier #(
                 // determine value of writeMem_addr
                 readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
                 first_read = 1'b1;
+
+                memVal_data = readMem_val;
             end
 
             EMPTY: begin
                 EN_readMem = 1'b0;
                 RDY_mult = 1'b1;
 
+                if (EN_mult == 1'b1) 
+                    next_state = IDLE;
+                else 
+                    next_state = EMPTY;
+
                 VALID_memVal = !first_VALID_memVal ?  1'b1 : 1'b0;
                 first_VALID_memVal = 1'b1;
             end
 
-            default: next_state = IDLE_WRITE;
+            default: next_state = IDLE;
         endcase
     end
 
