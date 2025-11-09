@@ -34,7 +34,9 @@ module multiplier #(
     state_t state, next_state;
 
     logic first_write; // flag
+    logic first_read; // flag
     logic first_VALID_memVal; // flag
+
     logic [32-1: 0] product;
 
     // multiplication logic
@@ -106,6 +108,8 @@ module multiplier #(
                 // write related signals
                 RDY_mult = 1'b0;
 
+                first_read = 1'b0; // flag
+
                 // read related signals
                 EN_writeMem = 1'b0;
                 EN_readMem = 1'b0;
@@ -128,7 +132,7 @@ module multiplier #(
             READ: begin
                 // set flag
                 first_VALID_memVal = 1'b0;
-
+                
                 // set states
                 if (readMem_addr < 6'd62)
                     next_state = READ;
@@ -141,8 +145,9 @@ module multiplier #(
                 else
                     VALID_memVal = 1'b0;
 
-                // increment
-                readMem_addr = readMem_addr + 1;
+                // determine value of writeMem_addr
+                readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
+                first_read = 1'b1;
             end
 
             EMPTY: begin
