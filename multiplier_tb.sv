@@ -5,21 +5,21 @@ module fsm_tb;
 
     logic                EN_mult;
     logic                EN_writeMem; 
-    logic [6:0]          writeMem_addr;
+    logic [6-1:0]          writeMem_addr;
 
     logic [15:0]         mult_input0;
     logic [15:0]         mult_input1;
-    logic [32-1:0]       writeMem_val;  
+    logic [16-1:0]       writeMem_val;  
 
     logic                RDY_mult;             
      
     logic                EN_blockRead;            
     logic                VALID_memVal;            
-    logic [32-1:0]       memVal_data;             
+    logic [16-1:0]       memVal_data;             
 
     logic                EN_readMem;              
     logic [6-1:0]        readMem_addr;            
-    logic [32-1:0]       readMem_val; 
+    logic [16-1:0]       readMem_val; 
 
   // Instantiate multiplier DUT
   multiplier multiplier_dut (
@@ -53,8 +53,8 @@ module fsm_tb;
     .aA(writeMem_addr),
     .aB(readMem_addr),
 
-    .cenA(EN_writeMem),
-    .cenB(EN_readMem),
+    .cenA(~EN_writeMem),
+    .cenB(~EN_readMem),
 
     .d(writeMem_val),
     .q(readMem_val)
@@ -68,8 +68,8 @@ module fsm_tb;
     .aA(writeMem_addr),
     .aB(readMem_addr),
 
-    .cenA(EN_writeMem),
-    .cenB(EN_readMem),
+    .cenA(~EN_writeMem),
+    .cenB(~EN_readMem),
 
     .d(writeMem_val),
     .q(readMem_val)
@@ -82,7 +82,7 @@ module fsm_tb;
   // Stimulus to fsm
   initial begin
     // initialize signals
-    rst = 0; EN_mult = 0; EN_blockRead = 0; readMem_val = 0;
+    rst = 0; EN_mult = 0; EN_blockRead = 0; 
 
     #10 rst = 1;                // release reset
     #10 EN_mult = 1;            // start writing
