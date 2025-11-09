@@ -81,7 +81,9 @@ module fsm_tb;
 
   // Stimulus to fsm
   initial begin
+    // initialize signals
     rst = 0; EN_mult = 0; EN_blockRead = 0; readMem_val = 0;
+
     #10 rst = 1;                // release reset
     #10 EN_mult = 1;            // start writing
     #10 mult_input0 = 1; mult_input1 = 9;
@@ -93,10 +95,20 @@ module fsm_tb;
     #10 mult_input0 = 7; mult_input1 = 3;
     #10 mult_input0 = 8; mult_input1 = 2;
     #10 mult_input0 = 9; mult_input1 = 1;
+    #10 mult_input0 = 11; mult_input1 = 91;
+    #10 mult_input0 = 12; mult_input1 = 81;
+    #10 mult_input0 = 13; mult_input1 = 71;
+    #10 mult_input0 = 14; mult_input1 = 61;
+    #10 mult_input0 = 15; mult_input1 = 51;
+    #10 mult_input0 = 16; mult_input1 = 41;
+    #10 mult_input0 = 17; mult_input1 = 31;
+    #10 mult_input0 = 18; mult_input1 = 21;
+    #10 mult_input0 = 19; mult_input1 = 11;
     #600 EN_mult = 0; // stop writing
     #10 EN_blockRead = 1;
     #10 readMem_val = 1; EN_blockRead = 0;
     #1000;
+
     $stop;
   end
 
