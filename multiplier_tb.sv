@@ -81,7 +81,7 @@ module fsm_tb;
 
   // Stimulus to fsm
   initial begin
-    rst = 0; EN_mult = 0; 
+    rst = 0; EN_mult = 0; EN_blockRead = 0; readMem_val = 0;
     #10 rst = 1;                // release reset
     #10 EN_mult = 1;            // start writing
     #10 mult_input0 = 1; mult_input1 = 9;
@@ -93,8 +93,10 @@ module fsm_tb;
     #10 mult_input0 = 7; mult_input1 = 3;
     #10 mult_input0 = 8; mult_input1 = 2;
     #10 mult_input0 = 9; mult_input1 = 1;
-    #600; EN_mult = 0; // stop writing
-    #50;
+    #600 EN_mult = 0; // stop writing
+    #10 EN_blockRead = 1;
+    #10 readMem_val = 1; EN_blockRead = 0;
+    #1000;
     $stop;
   end
 
