@@ -93,6 +93,18 @@ module fsm_tb;
   initial clk = 0;
   always #5 clk = ~clk;
 
+  always begin
+    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
+    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
+    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
+    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
+    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
+    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
+    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
+    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
+    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
+  end
+
   // Stimulus to fsm
   initial begin
     // initialize signals
@@ -100,79 +112,7 @@ module fsm_tb;
 
     #10 rst = 1;                
     #10 EN_mult = 1;            
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
-    #100;
+    #700;
     #10 EN_mult = 0; // stop writing
     #10 EN_blockRead = 1;
 
@@ -184,46 +124,3 @@ module fsm_tb;
 
 endmodule
 
-
-// module fsm_tb;
-//   localparam DEPTH=64, LOGD=6, W=16;
-
-//   logic clk;
-//   logic [LOGD-1:0] aA, aB;
-//   logic cenA, cenB;             // ACTIVE-LOW enables
-//   logic [W-1:0] d;
-//   wire  [W-1:0] q;
-
-//   // DUT: tie both ports to same clock for a simple demo
-//   registerArray #(.DEPTH(DEPTH), .LOGDEPTH(LOGD), .WORDWIDTH(W)) dut (
-//     .clkA(clk), .aA(aA), .cenA(cenA), .q(q),
-//     .clkB(clk), .aB(aB), .cenB(cenB), .d(d)
-//   );
-
-//   // simple 50% duty clock
-//   initial clk = 0;
-//   always #5 clk = ~clk;
-
-//   initial begin
-//     // defaults
-//     cenA = 0; cenB = 0; aA = '0; aB = '0; d = '0;
-
-//     // ---- WRITE phase (addr=3, data=16'hBEEF) ----
-//     @(negedge clk);              // set up before posedge
-//       aB   = 6'd3;
-//       d    = 16'hBEEF;
-//       cenB = 0;                  // enable write (active-low)
-//     @(posedge clk);              // write occurs here
-//     @(negedge clk);
-//       cenB = 0;                  // disable write
-
-//     // ---- READ phase (same addr=3) ----
-//     @(negedge clk);
-//       aA   = 6'd3;
-//       cenA = 0;                  // enable read (active-low)
-//     @(posedge clk);              // rowBuffer <= mem[3] here; q updates
-//     #1 $display("q = 0x%h (expect 0xBEEF)", q);
-
-//     $finish;
-//   end
-// endmodule
