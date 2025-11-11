@@ -9,7 +9,7 @@ typedef enum logic [2:0] {
 module multiplier #(
 ) (
     input  logic                clk,
-    input  logic                rst,      
+    // input  logic                rst,      
 
     input  logic                EN_mult, // high to start multiplication
     output logic                EN_writeMem, // high to write to mem   
@@ -30,34 +30,37 @@ module multiplier #(
     input  logic [16-1:0]       readMem_val // data read from mem               
 );
 
-    state_t state, next_state;
+    state_t state = IDLE;
+    state_t next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [16-1: 0] product;
+    logic [16-1: 0] product,product_pre;
 
     // multiplication logic
-    always_comb begin
-        product = mult_input0 * mult_input1;
+    always_ff @(posedge clk) begin
+        product <= mult_input0 * mult_input1;
+        writeMem_val <= product;
     end
 
-    // clocked multiplication logic
-    always_ff @(posedge clk) begin
-        writeMem_val = product;
+    always_comb begin
+        memVal_data = readMem_val;   
     end
 
     // state transition/behaviour logic
     always_ff @(posedge clk) begin
         // next_state = state; // default hold
 
-        if (!rst)
-            state = IDLE;
-        else
-            // transition to next state
-            state = next_state;
+        // if (!rst)
+        //     state = IDLE;
+        // else
+        //     // transition to next state
+        //     state = next_state;
+
+        state = next_state;
         
         unique case (state)
 
@@ -119,6 +122,7 @@ module multiplier #(
 
                 // read related signals
                 EN_writeMem = 1'b0;
+                writeMem_addr=6'b0;
                 EN_readMem = 1'b0;
                 readMem_addr = 1'b0;
 
@@ -128,8 +132,9 @@ module multiplier #(
                 end 
                 else begin
                     if (EN_blockRead == 1'b1) begin
-                        EN_readMem = 1'b1;
                         next_state = READ;
+                        EN_readMem = 1'b1;
+                        readMem_addr = 6'b0;
                     end
                     else 
                         next_state = FULL;
@@ -137,30 +142,41 @@ module multiplier #(
             end
 
             READ: begin
-                // set flag
-                first_VALID_memVal = 1'b0;
+                // // set flag
+                // first_VALID_memVal = 1'b0;
+
+                VALID_memVal = 1'b1;
+                // memVal_data <= readMem_val;                
                 
                 // determine next state
-                if (readMem_addr < 6'd62)
+                if (readMem_addr < 6'd63) begin
                     next_state = READ;
-                else
-                    next_state = EMPTY;
+                    EN_readMem = 1'b1;
+                    readMem_addr =readMem_addr + 1;
+                end
+                else begin
+                    RDY_mult = 1'b1;
+                    next_state = IDLE;
+                    EN_readMem = 1'b0;
+                    // readMem_addr=6'b0;
+                end
 
-                // determine value for VALID_memVal
-                if (EN_readMem == 1'b1)
-                    VALID_memVal = 1'b1;
-                else
-                    VALID_memVal = 1'b0;
+                // // determine value for VALID_memVal
+                // if (EN_readMem == 1'b1)
+                //     VALID_memVal = 1'b1;
+                // else
+                //     VALID_memVal = 1'b0;
 
                 // determine value of writeMem_addr
-                readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
-                first_read = 1'b1;
 
-                memVal_data = readMem_val;
+               //readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
+                // first_read = 1'b1;
+
             end
-
+/*
             EMPTY: begin
                 EN_readMem = 1'b0;
+                next_state=IDLE;
                 RDY_mult = 1'b1;
 
                 if (EN_mult == 1'b1) 
@@ -171,6 +187,7 @@ module multiplier #(
                 VALID_memVal = !first_VALID_memVal ?  1'b1 : 1'b0;
                 first_VALID_memVal = 1'b1;
             end
+            */
 
             default: next_state = IDLE;
         endcase
