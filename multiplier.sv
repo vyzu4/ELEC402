@@ -2,14 +2,14 @@ typedef enum logic [2:0] {
     IDLE  = 3'b000,
     WRITE = 3'b001,
     FULL =  3'b010,
-    READ = 3'b011,
-    EMPTY = 3'b100
+    READ = 3'b011
+    // EMPTY = 3'b100
 } state_t;
 
 module multiplier #(
 ) (
     input  logic                clk,
-    // input  logic                rst,      
+    input  logic                rst,      
 
     input  logic                EN_mult, // high to start multiplication
     output logic                EN_writeMem, // high to write to mem   
@@ -29,16 +29,15 @@ module multiplier #(
     output logic [6-1:0]        readMem_addr, // addr to read from           
     input  logic [16-1:0]       readMem_val // data read from mem               
 );
-
-    state_t state = IDLE;
-    state_t next_state;
+    // state stuff
+    state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [16-1: 0] product,product_pre;
+    logic [16-1: 0] product;
 
     // multiplication logic
     always_ff @(posedge clk) begin
@@ -54,13 +53,13 @@ module multiplier #(
     always_ff @(posedge clk) begin
         // next_state = state; // default hold
 
-        // if (!rst)
-        //     state = IDLE;
-        // else
-        //     // transition to next state
-        //     state = next_state;
+        if (rst)
+            state = IDLE;
+        else
+            // transition to next state
+            state = next_state;
 
-        state = next_state;
+        // state = next_state;
         
         unique case (state)
 
