@@ -1,7 +1,7 @@
 module fsm_tb;
   // multiplier i/o
     logic                clk; // input
-    // logic                rst; // input     
+    logic                rst; // input     
 
     logic                EN_mult; // input
     logic                EN_writeMem; // output
@@ -37,7 +37,7 @@ module fsm_tb;
   // Instantiate multiplier DUT
   multiplier multiplier_dut (
     .clk(clk),
-    // .rst(rst),
+    .rst(rst),
 
     .EN_mult(EN_mult),
     .EN_writeMem(EN_writeMem),
@@ -108,8 +108,8 @@ module fsm_tb;
   // Stimulus to fsm
   initial begin
     // initialize signals
-    EN_mult = 0; EN_blockRead = 0; 
-         
+    #10 rst = 1; EN_mult = 0; EN_blockRead = 0; 
+    #10 rst = 0;
     #10 EN_mult = 1;            
     #700;
     #10 EN_mult = 0; // stop writing
