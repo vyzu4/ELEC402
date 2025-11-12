@@ -21,7 +21,7 @@ module fsm_tb;
     logic [6-1:0]        readMem_addr; // output           
     logic [16-1:0]       readMem_val; // input 
 
-    /////////////////////////////////////////
+  /////////////////////////////////////////
 
     logic           clkA; // input  
     logic           clkB; // input  
@@ -31,6 +31,17 @@ module fsm_tb;
     logic           cenB; // input  
     logic [16-1:0]   d; // input  
     logic [16-1:0]   q; // output  
+
+  ////////////////////////////
+
+    // wire            wire_clkA; // input  
+    // wire            wire_clkB; // input  
+    // wire [6-1:0]    wire_aA; // input  
+    // wire [6-1:0]    wire_aB; // input  
+    // wire            wire_cenA; // input  
+    // wire            wire_cenB; // input  
+    // wire [16-1:0]   wire_d; // input  
+    // wire [16-1:0]   wire_q; // output  
 
 
 
@@ -73,25 +84,26 @@ module fsm_tb;
     .q(q)
   );
 
-  // Instantiate registerArray DUT
-  registerArray mra_dut (
-    .clkA(clk),
-    .clkB(clk),
+  // // Instantiate registerArray DUT
+  // registerArray mra_dut (
+  //   .clkA(wire_clk),
+  //   .clkB(wire_clk),
 
-    .aA(readMem_addr),
-    .aB(writeMem_addr),
+  //   .aA(wire_readMem_addr),
+  //   .aB(wire_writeMem_addr),
 
-    .cenA(~EN_readMem),
-    .cenB(~EN_writeMem),
+  //   .cenA(~wire_EN_readMem),
+  //   .cenB(~wire_EN_writeMem),
 
-    .d(writeMem_val),
-    .q(q)
-  );
+  //   .d(wire_writeMem_val),
+  //   .q(wire_q)
+  // );
 
 
   // Clock generator
   initial clk = 0;
-  always #5 clk = ~clk;
+  always #1.25 clk = ~clk; // 400 MHz
+  // always #0.625 clk = ~clk; // 800 MHz
 
   always begin
     #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
