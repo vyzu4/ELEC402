@@ -103,37 +103,36 @@ module fsm_tb;
 
   // Clock generator
   initial clk = 0;
-  always #1.25 clk = ~clk; // 400 MHz
-  // always #0.625 clk = ~clk; // 800 MHz
+  // always #1.25 clk = ~clk; // 400 MHz
+  always #0.625 clk = ~clk; // 800 MHz
 
   always begin
-    #10 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #10 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #10 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #10 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #10 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #10 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #10 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #10 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #10 mult_input0 = 16'd9; mult_input1 = 16'd1;
+    #1.25 mult_input0 = 16'd1; mult_input1 = 16'd9;
+    #1.25 mult_input0 = 16'd2; mult_input1 = 16'd8;
+    #1.25 mult_input0 = 16'd3; mult_input1 = 16'd7;
+    #1.25 mult_input0 = 16'd4; mult_input1 = 16'd6;
+    #1.25 mult_input0 = 16'd5; mult_input1 = 16'd5;
+    #1.25 mult_input0 = 16'd6; mult_input1 = 16'd4;
+    #1.25 mult_input0 = 16'd7; mult_input1 = 16'd3;
+    #1.25 mult_input0 = 16'd8; mult_input1 = 16'd2;
+    #1.25 mult_input0 = 16'd9; mult_input1 = 16'd1;
   end
 
   // Stimulus to fsm
   initial begin
     // initialize signals
-    #10 rst = 1; EN_mult = 0; EN_blockRead = 0; 
-    #10 rst = 0;
-    #10 EN_mult = 1;            
-    #700;
-    #10 EN_mult = 0; // stop writing
-    #10 EN_blockRead = 1;
-    #10 EN_blockRead = 0;
+    #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
+    #1.25 rst = 0;
+    #1.25 EN_mult = 1;            
+    #80;
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
 
-    #700 EN_mult = 1;
-    #700;
+    #150 EN_mult = 1;
+    #150;
 
     $stop;
   end
 
 endmodule
-
