@@ -55,6 +55,7 @@ module multiplier #(
 
         if (rst)
             state = IDLE;
+            // initialize all i/o
         else
             // transition to next state
             state = next_state;
@@ -70,6 +71,7 @@ module multiplier #(
                 RDY_mult = 1'b1;
                 EN_readMem= 1'b0;
                 writeMem_addr = 1'b0;
+                EN_writeMem = 1'b0;
 
                 // initialize write signals
                 readMem_addr = 1'b0;
@@ -77,6 +79,7 @@ module multiplier #(
 
                 // determine next state
                 if (EN_mult == 1'b1) begin
+                    EN_writeMem = 1'b1;
                     next_state = WRITE;
                 end
                 else begin
@@ -86,7 +89,7 @@ module multiplier #(
 
             WRITE: begin
                 // initialize write signals
-                EN_writeMem = 1'b1;
+                // EN_writeMem = 1'b1;
 
                 // determine value of RDY_mult
                 if (writeMem_addr < 6'd61)
@@ -193,5 +196,4 @@ module multiplier #(
     end
 
 endmodule
-
 
