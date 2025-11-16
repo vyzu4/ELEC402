@@ -80,6 +80,7 @@ module multiplier #(
                 // determine next state
                 if (EN_mult == 1'b1) begin
                     EN_writeMem = 1'b1;
+                    state = WRITE;
                     next_state = WRITE;
                 end
                 else begin
@@ -97,23 +98,33 @@ module multiplier #(
                 else
                     RDY_mult = 1'b0;
 
-                // determine EN_writeMem and next state
-                if (EN_mult == 1'b0) begin
-                    EN_writeMem = 1'b0;
-                    next_state = IDLE;
-                end
+                // // determine EN_writeMem and next state
+                // if (EN_mult == 1'b0) begin
+                //     EN_writeMem = 1'b0;
+                //     next_state = IDLE;
+                // end
+                // else begin
+                //     EN_writeMem = 1'b1;
+
+                //     if (writeMem_addr < 6'd62)
+                //         next_state = WRITE;
+                //     else
+                //         next_state = FULL;
+                // end
+
+                if (writeMem_addr <= 6'd62)
+                    next_state = WRITE;
                 else begin
-                    EN_writeMem = 1'b1;
-
-                    if (writeMem_addr < 6'd62)
-                        next_state = WRITE;
-                    else
-                        next_state = FULL;
+                    EN_writeMem = 1'b0;
+                    next_state = FULL;
                 end
 
-                // determine value of writeMem_addr
-                writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
-                first_write = 1'b1;
+
+                // // determine value of writeMem_addr
+                // writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
+                // first_write = 1'b1;
+
+                writeMem_addr = writeMem_addr + 1;
             end
 
             FULL: begin
@@ -134,6 +145,7 @@ module multiplier #(
                 end 
                 else begin
                     if (EN_blockRead == 1'b1) begin
+                        state = READ;
                         next_state = READ;
                         EN_readMem = 1'b1;
                         readMem_addr = 6'b0;
