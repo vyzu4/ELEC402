@@ -107,15 +107,9 @@ module fsm_tb;
   always #0.625 clk = ~clk; // 800 MHz
 
   always begin
-    #1.25 mult_input0 = 16'd1; mult_input1 = 16'd9;
-    #1.25 mult_input0 = 16'd2; mult_input1 = 16'd8;
-    #1.25 mult_input0 = 16'd3; mult_input1 = 16'd7;
-    #1.25 mult_input0 = 16'd4; mult_input1 = 16'd6;
-    #1.25 mult_input0 = 16'd5; mult_input1 = 16'd5;
-    #1.25 mult_input0 = 16'd6; mult_input1 = 16'd4;
-    #1.25 mult_input0 = 16'd7; mult_input1 = 16'd3;
-    #1.25 mult_input0 = 16'd8; mult_input1 = 16'd2;
-    #1.25 mult_input0 = 16'd9; mult_input1 = 16'd1;
+    #1.25; 
+    assign mult_input0 = writeMem_addr; 
+    assign mult_input1 = writeMem_addr; 
   end
 
   // Stimulus to fsm
@@ -124,10 +118,12 @@ module fsm_tb;
     #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
     #1.25 rst = 0;
     #1.25 EN_mult = 1;            
-    #80;
+    #80; 
+    #10;
     #1.25 EN_mult = 0; // stop writing
     #1.25 EN_blockRead = 1;
     #1.25 EN_blockRead = 0;
+    #80;
 
     #150 EN_mult = 1;
     #150;
