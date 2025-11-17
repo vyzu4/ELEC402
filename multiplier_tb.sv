@@ -47,7 +47,7 @@ module fsm_tb;
 
 
   // Instantiate multiplier DUT
-  multiplier multiplier (
+  multiplier multiplier_v2_map (
     .clk(clk),
     .rst(rst),
 
