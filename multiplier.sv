@@ -173,7 +173,7 @@ module multiplier #(
                 // end
 
                 if (EN_blockRead == 1'b1) begin
-                    // state = READ;
+                    state = READ;
                     next_state = READ;
                     EN_readMem = 1'b1;
                     readMem_addr = 6'b0;
@@ -194,9 +194,10 @@ module multiplier #(
                 if (readMem_addr < 6'd63) begin
                     next_state = READ;
                     EN_readMem = 1'b1;
-                    // readMem_addr = readMem_addr + 1;
-                    readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
-                    VALID_memVal = !first_read ?  1'b0 : 1'b1;
+                    readMem_addr = readMem_addr + 1;
+                    // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
+                    // VALID_memVal = !first_read ?  1'b0 : 1'b1;
+                    VALID_memVal = 1'b1;
                     first_read = 1'b1;
                 end
                 else begin
