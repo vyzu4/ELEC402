@@ -1,236 +1,142 @@
-typedef enum logic [2:0] {
-    IDLE  = 3'b000,
-    WRITE = 3'b001,
-    FULL =  3'b010,
-    READ = 3'b011
-} state_t;
-
-module multiplier #(    
-    parameter LOGDEPTH = 6,
+`timescale 1ns/1ps
+module fsm_tb #(
     parameter WIDTH = 32
-) (
-    input  logic                    clk,
-    input  logic                    rst,      
-
-    input  logic                    EN_mult, // high to start multiplication
-    output logic                    EN_writeMem, // high to write to mem   
-    output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
-
-    input  logic [16-1:0]           mult_input0,
-    input  logic [16-1:0]           mult_input1,
-    output logic [WIDTH-1:0]        writeMem_val,  
-
-    output logic                    RDY_mult, // ready to multiply             
-     
-    input  logic                    EN_blockRead, // high to read from mem block           
-    output logic                    VALID_memVal, // high for valid mem val           
-    output logic [WIDTH-1:0]        memVal_data, // mem data            
-
-    output logic                    EN_readMem, // high to start reading mem             
-    output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
-    input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
-    // state stuff
-    state_t state;
-    state_t next_state;
+  // multiplier i/o
+    logic                clk; // input
+    logic                rst; // input     
 
-    // flags
-    logic first_write; 
-    // logic first_read = 1'b0; 
-    // logic first_VALID_memVal = 1'b0; 
+    logic                EN_mult; // input
+    logic                EN_writeMem; // output
+    logic [6-1:0]          writeMem_addr; // output
 
-    logic [32-1: 0] product;
-    // logic [32-1: 0] read_product1, read_product2;
+    logic [15:0]         mult_input0; // input
+    logic [15:0]         mult_input1; // input
+    logic [WIDTH-1:0]       writeMem_val; // output 
 
-    // multiplication logic
-    always_ff @(posedge clk) begin
-        // product <= mult_input0 * mult_input1;
-        writeMem_val <= product;  
-    end
+    logic                RDY_mult;             
+     
+    logic                EN_blockRead; // input           
+    logic                VALID_memVal; // output           
+    logic [WIDTH-1:0]       memVal_data; // output            
 
-    always_comb begin
-        product = mult_input0 * mult_input1;
-        memVal_data = readMem_val;   
-    end
+    logic                EN_readMem; // output             
+    logic [6-1:0]        readMem_addr; // output           
+    logic [WIDTH-1:0]       readMem_val; // input 
 
-    // state transition/behaviour logic
-    always_ff @(posedge clk) begin
-        // next_state = state; // default hold
+  /////////////////////////////////////////
 
-        if (rst) begin
-            state = IDLE;
-            next_state = IDLE;
-            first_write = 1'b0;
-            // initialize all i/o
-            EN_writeMem = 1'b0;
-            writeMem_addr = 6'b0;
-            writeMem_val = 32'b0;
-            RDY_mult = 1'b0;
-            VALID_memVal = 1'b0;
-            EN_readMem = 1'b0;
-            readMem_addr = 6'b0;
-        end
-        else
-            // transition to next state
-            state = next_state;
+    logic           clkA; // input  
+    logic           clkB; // input  
+    logic [6-1:0]   aA; // input  
+    logic [6-1:0]   aB; // input  
+    logic           cenA; // input  
+    logic           cenB; // input  
+    logic [WIDTH-1:0]   d; // input  
+    logic [WIDTH-1:0]   q; // output  
 
-        // state = next_state;
-        
-        unique case (state)
+  ////////////////////////////
 
-            IDLE: begin
-                first_write = 1'b0; //set flag
-                
-                // initialize write signals
-                RDY_mult = 1'b1;
-                EN_readMem = 1'b0;
-                writeMem_addr = 1'b0;
-                EN_writeMem = 1'b0;
-
-                // // initialize write signals
-                // readMem_addr = 1'b0;
-                VALID_memVal = 1'b0; 
-
-                // determine next state
-                if (EN_mult == 1'b1) begin
-                    // EN_writeMem = 1'b1;
-                    // state = WRITE;
-                    next_state = WRITE;
-                end
-                else begin
-                    next_state = IDLE;
-                end
-            end
-
-            WRITE: begin
-                // initialize write signals
-                EN_writeMem = 1'b1;
-
-                // initialize write signals
-                readMem_addr = 1'b0;
-                VALID_memVal = 1'b0; 
-
-                // determine value of RDY_mult
-                if (writeMem_addr < 6'd61)
-                    RDY_mult = 1'b1;
-                else
-                    RDY_mult = 1'b0;
-
-                // // determine EN_writeMem and next state
-                // if (EN_mult == 1'b0) begin
-                //     EN_writeMem = 1'b0;
-                //     next_state = IDLE;
-                // end
-                // else begin
-                //     EN_writeMem = 1'b1;
-
-                //     if (writeMem_addr < 6'd62)
-                //         next_state = WRITE;
-                //     else
-                //         next_state = FULL;
-                // end
-
-                if (writeMem_addr <= 6'd62) begin
-                    next_state = WRITE;
-
-                    // determine value of writeMem_addr
-                    writeMem_addr = !first_write ?  6'b0 : writeMem_addr + 1;
-                    first_write = 1'b1;
-                end
-                else begin
-                    next_state = FULL;
-                    EN_writeMem = 1'b0;
-                    writeMem_addr = 6'b0;
-                end
+    // wire            wire_clkA; // input  
+    // wire            wire_clkB; // input  
+    // wire [6-1:0]    wire_aA; // input  
+    // wire [6-1:0]    wire_aB; // input  
+    // wire            wire_cenA; // input  
+    // wire            wire_cenB; // input  
+    // wire [16-1:0]   wire_d; // input  
+    // wire [16-1:0]   wire_q; // output  
 
 
-                // // determine value of writeMem_addr
-                // writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
-                // first_write = 1'b1;
+multiplier #(
+    .WIDTH(WIDTH)
+  ) multiplier_dut (
+    .clk(clk),
+    .rst(rst),
 
-                // writeMem_addr = writeMem_addr + 1;
-            end
+    .EN_mult(EN_mult),
+    .EN_writeMem(EN_writeMem),
+    .writeMem_addr(writeMem_addr),
 
-            FULL: begin
-                // initialize write signals
-                RDY_mult = 1'b0;
+    .mult_input0(mult_input0),
+    .mult_input1(mult_input1),
+    .writeMem_val(writeMem_val),
 
-                // initialize read signals
-                EN_writeMem = 1'b0;
-                writeMem_addr = 6'b0;
-                EN_readMem = 1'b0;
-                readMem_addr = 1'b0;
+    .RDY_mult(RDY_mult),
 
-                // set flag
-                // first_read = 1'b0; 
+    .EN_blockRead(EN_blockRead),
+    .VALID_memVal(VALID_memVal),
+    .memVal_data(memVal_data),
 
-                // // determine next state
-                // if (EN_mult == 1'b1) begin
-                //     next_state = FULL;
-                // end 
-                // else begin
-                //     if (EN_blockRead == 1'b1) begin
-                //         state = READ;
-                //         next_state = READ;
-                //         EN_readMem = 1'b1;
-                //         readMem_addr = 6'b0;
-                //     end
-                //     else 
-                //         next_state = FULL;
-                // end
+    .EN_readMem(EN_readMem),
+    .readMem_addr(readMem_addr),
+    .readMem_val(q)
+);
 
-                if (EN_blockRead == 1'b1) begin
-                    // state = READ;
-                    next_state = READ;
-                    EN_readMem = 1'b1;
-                    readMem_addr = 6'b0;
-                end
-                else 
-                    next_state = FULL;
+  // Instantiate memory_wrapper_2port DUT
+  memory_wrapper_2port #(
+    .WIDTH(WIDTH)
+  ) mw2p_dut (
+    .clkA(clk),
+    .clkB(clk),
 
-            end
+    .aA(readMem_addr),
+    .aB(writeMem_addr),
 
-            READ: begin
-                // // set flag
-                // first_VALID_memVal = 1'b0;
+    .cenA(~EN_readMem),
+    .cenB(~EN_writeMem),
 
-                // VALID_memVal = 1'b1;
-                // memVal_data <= readMem_val;                
-                
-                // determine next state
-                if (readMem_addr < 6'd63) begin
-                    next_state = READ;
-                    EN_readMem = 1'b1;
+    .d(writeMem_val),
+    .q(q)
+  );
 
-                    readMem_addr = readMem_addr + 1;
+  // Clock generator
+  initial clk = 0;
+  always #1.25 clk = ~clk; // 400 MHz
+  // always #0.625 clk = ~clk; // 800 MHz
 
-                    // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
-                    // VALID_memVal = !first_read ?  1'b0 : 1'b1;
+  always begin
+    // #1.25; 
+    // assign mult_input0 = 16'd65535; 
+    // assign mult_input1 = 16'd65535; 
+    // #1.25;
+    #2.5; 
+    assign mult_input0 = writeMem_addr; 
+    assign mult_input1 = writeMem_addr; 
+  end
 
-                    VALID_memVal = 1'b1;
-                    // first_read = 1'b1;
-                end
-                else begin
-                    next_state = IDLE;
-                    RDY_mult = 1'b1;
-                    EN_readMem = 1'b0;
-                end
+  // Stimulus to fsm
+  initial begin
+    // initialize signals
+    #2.5 rst = 1; EN_mult = 0; EN_blockRead = 0; 
+    #2.5 rst = 0;
 
-                // // determine value for VALID_memVal
-                // if (EN_readMem == 1'b0)
-                //     VALID_memVal = 1'b0;
-                // else
-                //     VALID_memVal = 1'b1;
+    // 
+    #10 EN_mult = 1;            
+    #160; 
+    #2.5 EN_mult = 0; // stop writing
+    #2.5 EN_blockRead = 1;
+    #2.5 EN_blockRead = 0;
+    #160;
+    // 
+    # 5 EN_mult = 1;            
+    #80; 
+    #2.5 EN_mult = 0; // stop writing
+    #2.5 EN_blockRead = 1;
+    #2.5 EN_blockRead = 0;
+    #160;
+    // 
+    # 5 EN_mult = 1;            
+    #80; 
+    #2.5 EN_mult = 0; // stop writing
+    #2.5 EN_blockRead = 1;
+    #2.5 EN_blockRead = 0;
+    #160;
 
-                // determine value of writeMem_addr
 
-                // readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
-                // first_read = 1'b1;
+ 
+    #80;
 
-            end
-
-            default: next_state = IDLE;
-        endcase
-    end
+    $stop;
+  end
 
 endmodule
