@@ -43,9 +43,10 @@ module multiplier #(
 
     // multiplication logic
     always_ff @(posedge clk) begin
-        pre_product <= mult_input0 * mult_input1;
-        product <= product;
-        writeMem_val <= product;
+        // product <= mult_input0 * mult_input1;
+        // writeMem_val <= product;
+
+        writeMem_val <= mult_input0 * mult_input1;
 
         memVal_data <= readMem_val;   
     end
