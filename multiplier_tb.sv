@@ -91,15 +91,14 @@ multiplier #(
 
   // Clock generator
   initial clk = 0;
-  always #1.25 clk = ~clk; // 400 MHz
-  // always #0.625 clk = ~clk; // 800 MHz
+  // always #1.25 clk = ~clk; // 400 MHz
+  always #0.625 clk = ~clk; // 800 MHz
 
   always begin
     // #1.25; 
     // assign mult_input0 = 16'd65535; 
     // assign mult_input1 = 16'd65535; 
-    // #1.25;
-    #2.5; 
+    #1.25;
     assign mult_input0 = writeMem_addr; 
     assign mult_input1 = writeMem_addr; 
   end
@@ -107,34 +106,72 @@ multiplier #(
   // Stimulus to fsm
   initial begin
     // initialize signals
-    #2.5 rst = 1; EN_mult = 0; EN_blockRead = 0; 
-    #2.5 rst = 0;
+    #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
+    #1.25 rst = 0;
 
     // 
-    #10 EN_mult = 1;            
-    #160; 
-    #2.5 EN_mult = 0; // stop writing
-    #2.5 EN_blockRead = 1;
-    #2.5 EN_blockRead = 0;
-    #160;
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
     // 
-    # 5 EN_mult = 1;            
-    #80; 
-    #2.5 EN_mult = 0; // stop writing
-    #2.5 EN_blockRead = 1;
-    #2.5 EN_blockRead = 0;
-    #160;
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
     // 
-    # 5 EN_mult = 1;            
-    #80; 
-    #2.5 EN_mult = 0; // stop writing
-    #2.5 EN_blockRead = 1;
-    #2.5 EN_blockRead = 0;
-    #160;
-
-
- 
-    #80;
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
+    // 
+    #5 EN_mult = 1; // enable writing   
+    #80; // finish multiplying
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1; // enable reading
+    #1.25 EN_blockRead = 0;
+    #80; // finish reading
 
     $stop;
   end
