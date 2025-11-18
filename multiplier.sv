@@ -5,38 +5,36 @@ typedef enum logic [2:0] {
     READ = 3'b011
 } state_t;
 
-module multiplier #(    
-    parameter LOGDEPTH = 6,
-    parameter WIDTH = 32
+module multiplier #(
 ) (
-    input  logic                    clk,
-    input  logic                    rst,      
+    input  logic                clk,
+    input  logic                rst,      
 
-    input  logic                    EN_mult, // high to start multiplication
-    output logic                    EN_writeMem, // high to write to mem   
-    output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
+    input  logic                EN_mult, // high to start multiplication
+    output logic                EN_writeMem, // high to write to mem   
+    output logic [6-1:0]        writeMem_addr, // addr to write to
 
-    input  logic [16-1:0]           mult_input0,
-    input  logic [16-1:0]           mult_input1,
-    output logic [WIDTH-1:0]        writeMem_val,  
+    input  logic [16-1:0]       mult_input0,
+    input  logic [16-1:0]       mult_input1,
+    output logic [16-1:0]       writeMem_val,  
 
-    output logic                    RDY_mult, // ready to multiply             
+    output logic                RDY_mult, // ready to multiply             
      
-    input  logic                    EN_blockRead, // high to read from mem block           
-    output logic                    VALID_memVal, // high for valid mem val           
-    output logic [WIDTH-1:0]        memVal_data, // mem data            
+    input  logic                EN_blockRead, // high to read from mem block           
+    output logic                VALID_memVal, // high for valid mem val           
+    output logic [16-1:0]       memVal_data, // mem data            
 
-    output logic                    EN_readMem, // high to start reading mem             
-    output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
-    input  logic [WIDTH-1:0]        readMem_val // data read from mem               
+    output logic                EN_readMem, // high to start reading mem             
+    output logic [6-1:0]        readMem_addr, // addr to read from           
+    input  logic [16-1:0]       readMem_val // data read from mem               
 );
     // state stuff
     state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
-    // logic first_read = 1'b0; 
-    // logic first_VALID_memVal = 1'b0; 
+    logic first_read = 1'b0; 
+    logic first_VALID_memVal = 1'b0; 
 
     logic [16-1: 0] product;
 
@@ -56,12 +54,11 @@ module multiplier #(
         // next_state = state; // default hold
 
         if (rst) begin
-            // state = IDLE;
-            next_state = IDLE;
-            // first_write = 1'b0;
+            state = IDLE;
             // // initialize all i/o
             // EN_writeMem = 1'b0;
             // writeMem_addr = 6'b0;
+            // writeMem_val = 16'b0;
             // RDY_mult = 1'b0;
             // VALID_memVal = 1'b0;
             // EN_readMem = 1'b0;
@@ -103,7 +100,7 @@ module multiplier #(
                 // initialize write signals
                 EN_writeMem = 1'b1;
 
-                // initialize read signals
+                // initialize write signals
                 readMem_addr = 1'b0;
                 VALID_memVal = 1'b0; 
 
@@ -159,7 +156,7 @@ module multiplier #(
                 readMem_addr = 1'b0;
 
                 // set flag
-                // first_read = 1'b0; 
+                first_read = 1'b0; 
 
                 // // determine next state
                 // if (EN_mult == 1'b1) begin
@@ -202,7 +199,7 @@ module multiplier #(
                     // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
                     // VALID_memVal = !first_read ?  1'b0 : 1'b1;
                     VALID_memVal = 1'b1;
-                    // first_read = 1'b1;
+                    first_read = 1'b1;
                 end
                 else begin
                     next_state = IDLE;
