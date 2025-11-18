@@ -5,28 +5,30 @@ typedef enum logic [2:0] {
     READ = 3'b011
 } state_t;
 
-module multiplier #(
+module multiplier #(    
+    parameter LOGDEPTH = 6,
+    parameter WIDTH = 32
 ) (
-    input  logic                clk,
-    input  logic                rst,      
+    input  logic                    clk,
+    input  logic                    rst,      
 
-    input  logic                EN_mult, // high to start multiplication
-    output logic                EN_writeMem, // high to write to mem   
-    output logic [6-1:0]        writeMem_addr, // addr to write to
+    input  logic                    EN_mult, // high to start multiplication
+    output logic                    EN_writeMem, // high to write to mem   
+    output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
 
-    input  logic [16-1:0]       mult_input0,
-    input  logic [16-1:0]       mult_input1,
-    output logic [16-1:0]       writeMem_val,  
+    input  logic [16-1:0]           mult_input0,
+    input  logic [16-1:0]           mult_input1,
+    output logic [WIDTH-1:0]        writeMem_val,  
 
-    output logic                RDY_mult, // ready to multiply             
+    output logic                    RDY_mult, // ready to multiply             
      
-    input  logic                EN_blockRead, // high to read from mem block           
-    output logic                VALID_memVal, // high for valid mem val           
-    output logic [16-1:0]       memVal_data, // mem data            
+    input  logic                    EN_blockRead, // high to read from mem block           
+    output logic                    VALID_memVal, // high for valid mem val           
+    output logic [WIDTH-1:0]        memVal_data, // mem data            
 
-    output logic                EN_readMem, // high to start reading mem             
-    output logic [6-1:0]        readMem_addr, // addr to read from           
-    input  logic [16-1:0]       readMem_val // data read from mem               
+    output logic                    EN_readMem, // high to start reading mem             
+    output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
+    input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
     // state stuff
     state_t state, next_state;
