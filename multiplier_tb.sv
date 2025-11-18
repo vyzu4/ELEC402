@@ -1,5 +1,7 @@
 `timescale 1ns/1ps
-module fsm_tb;
+module fsm_tb #(
+    parameter WIDTH = 32
+);
   // multiplier i/o
     logic                clk; // input
     logic                rst; // input     
@@ -10,17 +12,17 @@ module fsm_tb;
 
     logic [15:0]         mult_input0; // input
     logic [15:0]         mult_input1; // input
-    logic [16-1:0]       writeMem_val; // output 
+    logic [WIDTH-1:0]       writeMem_val; // output 
 
     logic                RDY_mult;             
      
     logic                EN_blockRead; // input           
     logic                VALID_memVal; // output           
-    logic [16-1:0]       memVal_data; // output            
+    logic [WIDTH-1:0]       memVal_data; // output            
 
     logic                EN_readMem; // output             
     logic [6-1:0]        readMem_addr; // output           
-    logic [16-1:0]       readMem_val; // input 
+    logic [WIDTH-1:0]       readMem_val; // input 
 
   /////////////////////////////////////////
 
@@ -30,8 +32,8 @@ module fsm_tb;
     logic [6-1:0]   aB; // input  
     logic           cenA; // input  
     logic           cenB; // input  
-    logic [16-1:0]   d; // input  
-    logic [16-1:0]   q; // output  
+    logic [WIDTH-1:0]   d; // input  
+    logic [WIDTH-1:0]   q; // output  
 
   ////////////////////////////
 
@@ -46,7 +48,7 @@ module fsm_tb;
 
 
 multiplier #(
-    .WIDTH(16)
+    .WIDTH(WIDTH)
   ) multiplier_dut (
     .clk(clk),
     .rst(rst),
@@ -72,7 +74,7 @@ multiplier #(
 
   // Instantiate memory_wrapper_2port DUT
   memory_wrapper_2port #(
-    .WIDTH(16)
+    .WIDTH(WIDTH)
   ) mw2p_dut (
     .clkA(clk),
     .clkB(clk),
