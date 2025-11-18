@@ -31,29 +31,26 @@ module multiplier #(
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
     // state stuff
-    state_t state, next_state;
+    state_t state = IDLE;
+    state_t next_state = IDLE;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [32-1: 0] pre_product, product;
-    logic [32-1: 0] read_product1, read_product2;
+    logic [32-1: 0] product;
+    // logic [32-1: 0] read_product1, read_product2;
 
     // multiplication logic
     always_ff @(posedge clk) begin
         product <= mult_input0 * mult_input1;
-        writeMem_val <= product;
-
-        // writeMem_val <= mult_input0 * mult_input1;
-
-        memVal_data <= readMem_val;   
+        writeMem_val <= product;  
     end
 
     always_comb begin
         // product = mult_input0 * mult_input1;
-        // memVal_data = readMem_val;   
+        memVal_data = readMem_val;   
     end
 
     // state transition/behaviour logic
@@ -62,14 +59,14 @@ module multiplier #(
 
         if (rst) begin
             state = IDLE;
-            // initialize all i/o
-            EN_writeMem = 1'b0;
-            writeMem_addr = 6'b0;
-            writeMem_val = 16'b0;
-            RDY_mult = 1'b0;
-            VALID_memVal = 1'b0;
-            EN_readMem = 1'b0;
-            readMem_addr = 6'b0;
+            // // initialize all i/o
+            // EN_writeMem = 1'b0;
+            // writeMem_addr = 6'b0;
+            // writeMem_val = 16'b0;
+            // RDY_mult = 1'b0;
+            // VALID_memVal = 1'b0;
+            // EN_readMem = 1'b0;
+            // readMem_addr = 6'b0;
         end
         else
             // transition to next state
@@ -181,7 +178,7 @@ module multiplier #(
                 // end
 
                 if (EN_blockRead == 1'b1) begin
-                    state = READ;
+                    // state = READ;
                     next_state = READ;
                     EN_readMem = 1'b1;
                     readMem_addr = 6'b0;
@@ -202,9 +199,12 @@ module multiplier #(
                 if (readMem_addr < 6'd63) begin
                     next_state = READ;
                     EN_readMem = 1'b1;
+
                     readMem_addr = readMem_addr + 1;
+
                     // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
                     // VALID_memVal = !first_read ?  1'b0 : 1'b1;
+
                     VALID_memVal = 1'b1;
                     first_read = 1'b1;
                 end
