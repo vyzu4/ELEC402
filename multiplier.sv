@@ -59,7 +59,7 @@ module multiplier #(
             state = IDLE;
             next_state = IDLE;
             // // initialize all i/o
-            EN_writeMem = 1'b0;
+            // EN_writeMem = 1'b0;
             // writeMem_addr = 6'b0;
             // writeMem_val = 16'b0;
             // RDY_mult = 1'b0;
