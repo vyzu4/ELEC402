@@ -45,7 +45,7 @@ module multiplier #(
     // multiplication logic
     always_ff @(posedge clk) begin
         // product <= mult_input0 * mult_input1;
-        writeMem_val <= product;  
+        writeMem_val = product;  
     end
 
     always_comb begin
