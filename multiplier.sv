@@ -53,16 +53,16 @@ module multiplier #(
         // next_state = state; // default hold
 
         if (rst) begin
-            state = IDLE;
-            next_state = IDLE;
-            first_write = 1'b0;
+            state <= IDLE;
+            next_state <= IDLE;
+            first_write <= 1'b0;
             // initialize all i/o
-            EN_writeMem = 1'b0;
-            writeMem_addr = 6'b0;
-            RDY_mult = 1'b0;
-            VALID_memVal = 1'b0;
-            EN_readMem = 1'b0;
-            readMem_addr = 6'b0;
+            EN_writeMem <= 1'b0;
+            writeMem_addr <= 6'b0;
+            RDY_mult <= 1'b0;
+            VALID_memVal <= 1'b0;
+            EN_readMem <= 1'b0;
+            readMem_addr <= 6'b0;
         end
         else
             // transition to next state
