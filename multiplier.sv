@@ -36,25 +36,15 @@ module multiplier #(
 
     // flags
     logic first_write; 
-    // logic first_read = 1'b0; 
-    // logic first_VALID_memVal = 1'b0; 
-
     logic [32-1: 0] product;
-    // logic [32-1: 0] read_product1, read_product2;
 
-    // multiplication logic
-    always_ff @(posedge clk) begin
-        product <= mult_input0 * mult_input1;
-    end
-
-    // multiplication logic
+    // writing multiplication logic
     always_ff @(posedge clk) begin
         writeMem_val <= product;  
     end
 
     always_comb begin
-        // product = mult_input0 * mult_input1;
-        // writeMem_val = product;  
+        product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
 
@@ -76,9 +66,7 @@ module multiplier #(
         end
         else
             // transition to next state
-            state = next_state;
-
-        // state = next_state;
+            state = next_state; // DO NOT CHANGE TO <=
         
         unique case (state)
 
