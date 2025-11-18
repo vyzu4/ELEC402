@@ -45,9 +45,9 @@ module fsm_tb;
     // wire [16-1:0]   wire_q; // output  
 
 
-
-  // Instantiate multiplier DUT
-  multiplier multiplier_v2_map (
+multiplier #(
+    .WIDTH(16)
+  ) multiplier_dut (
     .clk(clk),
     .rst(rst),
 
@@ -68,10 +68,12 @@ module fsm_tb;
     .EN_readMem(EN_readMem),
     .readMem_addr(readMem_addr),
     .readMem_val(q)
-  );
+);
 
   // Instantiate memory_wrapper_2port DUT
-  memory_wrapper_2port mw2p_dut (
+  memory_wrapper_2port #(
+    .WIDTH(16)
+  ) mw2p_dut (
     .clkA(clk),
     .clkB(clk),
 
@@ -85,28 +87,15 @@ module fsm_tb;
     .q(q)
   );
 
-  // // Instantiate registerArray DUT
-  // registerArray mra_dut (
-  //   .clkA(wire_clk),
-  //   .clkB(wire_clk),
-
-  //   .aA(wire_readMem_addr),
-  //   .aB(wire_writeMem_addr),
-
-  //   .cenA(~wire_EN_readMem),
-  //   .cenB(~wire_EN_writeMem),
-
-  //   .d(wire_writeMem_val),
-  //   .q(wire_q)
-  // );
-
-
   // Clock generator
   initial clk = 0;
   // always #1.25 clk = ~clk; // 400 MHz
   always #0.625 clk = ~clk; // 800 MHz
 
   always begin
+    // #1.25; 
+    // assign mult_input0 = 16'd65535; 
+    // assign mult_input1 = 16'd65535; 
     #1.25; 
     assign mult_input0 = writeMem_addr; 
     assign mult_input1 = writeMem_addr; 
@@ -117,16 +106,63 @@ module fsm_tb;
     // initialize signals
     #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
     #1.25 rst = 0;
+
+    // 1st cycle
     #1.25 EN_mult = 1;            
     #80; 
-    #10;
     #1.25 EN_mult = 0; // stop writing
     #1.25 EN_blockRead = 1;
     #1.25 EN_blockRead = 0;
     #80;
-
-    #150 EN_mult = 1;
-    #150;
+    // 2nd cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 3rd cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 4th cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 5th cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 6th cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 7th cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
+    // 8th cycle
+    #1.25 EN_mult = 1;            
+    #80; 
+    #1.25 EN_mult = 0; // stop writing
+    #1.25 EN_blockRead = 1;
+    #1.25 EN_blockRead = 0;
+    #80;
 
     $stop;
   end
