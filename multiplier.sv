@@ -35,8 +35,8 @@ module multiplier #(
 
     // flags
     logic first_write = 1'b0; 
-    logic first_read = 1'b0; 
-    logic first_VALID_memVal = 1'b0; 
+    // logic first_read = 1'b0; 
+    // logic first_VALID_memVal = 1'b0; 
 
     logic [16-1: 0] product;
 
@@ -56,7 +56,7 @@ module multiplier #(
         // next_state = state; // default hold
 
         if (rst) begin
-            state = IDLE;
+            // state = IDLE;
             next_state = IDLE;
             first_write = 1'b0;
             // initialize all i/o
@@ -103,7 +103,7 @@ module multiplier #(
                 // initialize write signals
                 EN_writeMem = 1'b1;
 
-                // initialize write signals
+                // initialize read signals
                 readMem_addr = 1'b0;
                 VALID_memVal = 1'b0; 
 
@@ -159,7 +159,7 @@ module multiplier #(
                 readMem_addr = 1'b0;
 
                 // set flag
-                first_read = 1'b0; 
+                // first_read = 1'b0; 
 
                 // // determine next state
                 // if (EN_mult == 1'b1) begin
@@ -202,7 +202,7 @@ module multiplier #(
                     // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
                     // VALID_memVal = !first_read ?  1'b0 : 1'b1;
                     VALID_memVal = 1'b1;
-                    first_read = 1'b1;
+                    // first_read = 1'b1;
                 end
                 else begin
                     next_state = IDLE;
