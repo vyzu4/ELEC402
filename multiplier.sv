@@ -42,12 +42,12 @@ module multiplier #(
 
     // multiplication logic
     always_ff @(posedge clk) begin
-        product <= mult_input0 * mult_input1;
+        // product <= mult_input0 * mult_input1;
         writeMem_val <= product;
     end
 
     always_comb begin
-        // product = mult_input0 * mult_input1;
+        product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
 
@@ -59,7 +59,7 @@ module multiplier #(
             state = IDLE;
             next_state = IDLE;
             // // initialize all i/o
-            EN_writeMem = 1'b0;
+            // EN_writeMem = 1'b0;
             // writeMem_addr = 6'b0;
             // writeMem_val = 16'b0;
             // RDY_mult = 1'b0;
