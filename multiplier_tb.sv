@@ -100,10 +100,11 @@ multiplier #(
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
 always @(posedge clk) begin
-    #0.15;   
-    mult_input0 = writeMem_addr;
-    mult_input1 = writeMem_addr;
+    #0.3;   // 50 ps after posedge
+    mult_input0 <= writeMem_addr;
+    mult_input1 <= writeMem_addr;
 end
+
 
 
 logic [31:0] inputs_vector [0:63];
