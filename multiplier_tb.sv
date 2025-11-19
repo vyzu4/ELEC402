@@ -36,7 +36,7 @@ module fsm_tb #(
     logic [WIDTH-1:0]   q; // output  
 
   ////////////////////////////
-    logic first=1'b0;
+
     // wire            wire_clkA; // input  
     // wire            wire_clkB; // input  
     // wire [6-1:0]    wire_aA; // input  
@@ -119,18 +119,14 @@ endtask
   // end
 
   always begin
-
-    if (first==1'b0)begin
-      #0.625;
-      first=1'b1;
-    end
+    #0.05; 
     // assign mult_input0 = 16'd65535; 
     // assign mult_input1 = 16'd65535; 
-
-    #1.25;
-    assign mult_input0 = 1; 
-    mult_input1 = writeMem_addr; 
-    
+    if (rst==1'b0)begin
+      #1.20;
+      assign mult_input0 = 1; 
+      mult_input1 = writeMem_addr; 
+    end
   end
 
 logic [31:0] inputs_vector [0:63];
