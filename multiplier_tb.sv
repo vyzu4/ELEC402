@@ -108,26 +108,21 @@ endtask
   // always #1.25 clk = ~clk; // 400 MHz
   always #0.625 clk = ~clk; // 800 MHz
 
-  // always begin
-  //   // #1.25; 
-  //   // assign mult_input0 = 16'd65535; 
-  //   // assign mult_input1 = 16'd65535; 
+// Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
+// We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
-  //   #1.25;
-  //   assign mult_input0 = 1; 
-  //   assign mult_input1 = writeMem_addr; 
-  // end
+always begin
+    // Wait until 0.05 ns before the next negedge
+    #(0.625 - 0.15);
+    mult_input0 = 1;
+    mult_input1 = writeMem_addr;
 
-  always begin
-    #0.05; 
-    // assign mult_input0 = 16'd65535; 
-    // assign mult_input1 = 16'd65535; 
-    if (rst==1'b0)begin
-      #1.20;
-      assign mult_input0 = 1; 
-      mult_input1 = writeMem_addr; 
-    end
-  end
+    // Finish the cycle until the next falling edge
+    #0.15;
+end
+
+
+
 
 logic [31:0] inputs_vector [0:63];
 logic [31:0] outputs_vector [0:63];
