@@ -89,25 +89,56 @@ multiplier #(
     .q(q)
   );
 
+task automatic generate_vectors(
+    output logic [31:0] inputs_vector [0:63],
+    output logic [31:0] outputs_vector [0:63]
+);
+    $display("start");
+    for (int i = 0; i < 64; i++) begin
+        inputs_vector[i] = i;
+        outputs_vector[i] = i*i;
+        $display("inputs: %0d", inputs_vector[i]);
+        $display("outputs: %0d", outputs_vector[i]);
+    end
+    $display("stop");
+endtask
+
   // Clock generator
   initial clk = 0;
   // always #1.25 clk = ~clk; // 400 MHz
   always #0.625 clk = ~clk; // 800 MHz
 
+  // always begin
+  //   // #1.25; 
+  //   // assign mult_input0 = 16'd65535; 
+  //   // assign mult_input1 = 16'd65535; 
+
+  //   #1.25;
+  //   assign mult_input0 = 1; 
+  //   assign mult_input1 = writeMem_addr; 
+  // end
+
   always begin
-    // #1.25; 
+    #0.05; 
     // assign mult_input0 = 16'd65535; 
     // assign mult_input1 = 16'd65535; 
-    #1.25;
-    assign mult_input0 = writeMem_addr; 
-    assign mult_input1 = writeMem_addr; 
+    if (rst==1'b0)begin
+      #1.20;
+      assign mult_input0 = 1; 
+      mult_input1 = writeMem_addr; 
+    end
   end
+
+logic [31:0] inputs_vector [0:63];
+logic [31:0] outputs_vector [0:63];
 
   // Stimulus to fsm
   initial begin
     // initialize signals
     #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
     #1.25 rst = 0;
+
+    generate_vectors(inputs_vector, outputs_vector);
 
     // 
     #5 EN_mult = 1; // enable writing   
