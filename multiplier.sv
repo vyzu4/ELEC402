@@ -38,29 +38,13 @@ module multiplier #(
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [WIDTH-1: 0] product, temp_prod;
-
-    logic temp_flip =1'b0;
+    logic [16-1: 0] product;
 
     // multiplication logic
     always_ff @(posedge clk) begin
-        writeMem_val = product;
-        product = 32'b0;
-
-        if (state==IDLE) begin
-            product = 32'b0;
-        end else begin
-             product = mult_input0 * mult_input1;
-        end
-        // if (temp_flip==1'b1) begin
-        //     temp_prod<=mult_input0 * mult_input1;
-        // end
-        // temp_flip = ~temp_flip;
+        product <= mult_input0 * mult_input1;
+        writeMem_val <= product;
     end
-
-    // always_ff @(negedge clk) begin
-    //     product <= 32'b0;
-    // end
 
     always_comb begin
         // product = mult_input0 * mult_input1;
@@ -75,7 +59,7 @@ module multiplier #(
             state = IDLE;
             next_state = IDLE;
             // // initialize all i/o
-            // EN_writeMem = 1'b0;
+            EN_writeMem = 1'b0;
             // writeMem_addr = 6'b0;
             // writeMem_val = 16'b0;
             // RDY_mult = 1'b0;
