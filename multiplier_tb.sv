@@ -99,15 +99,12 @@ multiplier #(
 // Clock period = 2.5 ns → negedge occurs at (period / 2) = 0.625 ns
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
-always begin
-    // Wait until 0.05 ns before the next negedge
-    #(1.25 - 0.15);
-    mult_input0 = 1;
+always @(posedge clk) begin
+    #0.15;   
+    mult_input0 = writeMem_addr;
     mult_input1 = writeMem_addr;
-
-    // Finish the cycle until the next falling edge
-    #0.15;
 end
+
 
 logic [31:0] inputs_vector [0:63];
 logic [31:0] outputs_vector [0:63];
