@@ -108,7 +108,12 @@ endtask
   // always #1.25 clk = ~clk; // 400 MHz
   always begin
     #0.625 clk = ~clk; // 800 MHz
-    if (clk==0) begin
+  end
+
+  always begin
+    #0.05;
+    if (clk==1) begin
+      #0.500;
       mult_input0 = 1; 
       mult_input1 = writeMem_addr; 
     end
