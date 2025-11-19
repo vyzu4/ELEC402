@@ -111,15 +111,12 @@ endtask
 // Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
-always begin
-    // Wait until 0.05 ns before the next negedge
-    #(0.625 - 0.05);
-    mult_input0 = writeMem_addr;
-    mult_input1 = writeMem_addr;
-
-    // Finish the cycle until the next falling edge
-    #0.05;
+always @(negedge clk) begin
+    #0.10;  // 100 ps away from the sampling edge
+    mult_input0 <= writeMem_addr;
+    mult_input1 <= writeMem_addr;
 end
+
 
 
 logic [31:0] inputs_vector [0:63];
