@@ -106,7 +106,13 @@ endtask
   // Clock generator
   initial clk = 0;
   // always #1.25 clk = ~clk; // 400 MHz
-  always #0.625 clk = ~clk; // 800 MHz
+  always begin
+    #0.625 clk = ~clk; // 800 MHz
+    if (clk==0) begin
+      mult_input0 = 1; 
+      mult_input1 = writeMem_addr; 
+    end
+  end
 
   // always begin
   //   // #1.25; 
@@ -118,20 +124,20 @@ endtask
   //   assign mult_input1 = writeMem_addr; 
   // end
 
-  always begin
+  // always begin
 
-    if (first==1'b0)begin
-      #0.625;
-      first=1'b1;
-    end
-    // assign mult_input0 = 16'd65535; 
-    // assign mult_input1 = 16'd65535; 
+  //   if (first!=1'b1)begin
+  //     #0.625;
+  //     first=1'b1;
+  //   end
+  //   // assign mult_input0 = 16'd65535; 
+  //   // assign mult_input1 = 16'd65535; 
 
-    #1.25;
-    assign mult_input0 = 1; 
-    mult_input1 = writeMem_addr; 
+  //   #1.25;
+  //   // mult_input0 = 1; 
+  //   // mult_input1 = writeMem_addr; 
     
-  end
+  // end
 
 logic [31:0] inputs_vector [0:63];
 logic [31:0] outputs_vector [0:63];
