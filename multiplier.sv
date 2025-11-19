@@ -109,8 +109,8 @@ endtask
   always #0.625 clk = ~clk; // 800 MHz
 
   always @(negedge clk) begin
-      mult_input0 <= writeMem_addr;
-      mult_input1 <= writeMem_addr;
+      mult_input0 = writeMem_addr;
+      mult_input1 = writeMem_addr;
   end
 
 logic [31:0] inputs_vector [0:63];
