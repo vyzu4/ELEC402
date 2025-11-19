@@ -1,252 +1,230 @@
-module multiplier_module (
-    input logic clk,
-    input logic rst_n,  // Asynchronous active-low reset
-    
-    // Multiplier inputs
-    input logic [15:0] operandA,
-    input logic [15:0] operandB,
-    input logic EN_mult,
-    
-    // Memory read control
-    input logic EN_readMem,
-    
-    // Outputs
-    output logic RDY_mult,
-    output logic RDY_readMem,
-    output logic [31:0] memVal,
-    output logic VALID_memVal
-);
+typedef enum logic [2:0] {
+    IDLE  = 3'b000,
+    WRITE = 3'b001,
+    FULL =  3'b010,
+    READ = 3'b011
+} state_t;
 
-    // FSM States
-    typedef enum logic [1:0] {
-        IDLE        = 2'b00,
-        MULTIPLYING = 2'b01,
-        MEM_FULL    = 2'b10,
-        READING     = 2'b11
-    } state_t;
-    
-    state_t current_state, next_state;
-    
-    // Internal signals
-    logic [31:0] mult_result;
-    logic [31:0] mult_result_d1, mult_result_d2;  // Pipeline registers
-    logic mult_valid_d1, mult_valid_d2;
-    
-    // Memory interface signals for 2-port memory
-    // Port A: Read port
-    logic [5:0] aA;           // Read address
-    logic cenA;               // Read chip enable (active low)
-    logic [31:0] q;           // Read data output
-    
-    // Port B: Write port
-    logic [5:0] aB;           // Write address
-    logic cenB;               // Write chip enable (active low)
-    logic [31:0] d;           // Write data input
-    
-    // Control counters
-    logic [6:0] write_count;  // 7 bits to hold 0-64
-    logic [6:0] read_count;   // 7 bits to hold 0-65 (need one extra for last data cycle)
-    logic mem_full;
-    logic read_done;
-    
-    // Multiplier pipeline (2 cycle delay as shown in figures)
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mult_result_d1 <= 32'h0;
-            mult_result_d2 <= 32'h0;
-            mult_valid_d1 <= 1'b0;
-            mult_valid_d2 <= 1'b0;
-        end else begin
-            // Stage 1: Multiply
-            mult_result_d1 <= mult_result;
-            mult_valid_d1 <= EN_mult && RDY_mult;
-            
-            // Stage 2: Pipeline delay
-            mult_result_d2 <= mult_result_d1;
-            mult_valid_d2 <= mult_valid_d1;
-        end
+module multiplier #(    
+    parameter LOGDEPTH = 6,
+    parameter WIDTH = 32
+) (
+    input  logic                    clk,
+    input  logic                    rst,      
+
+    input  logic                    EN_mult, // high to start multiplication
+    output logic                    EN_writeMem, // high to write to mem   
+    output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
+
+    input  logic [16-1:0]           mult_input0,
+    input  logic [16-1:0]           mult_input1,
+    output logic [WIDTH-1:0]        writeMem_val,  
+
+    output logic                    RDY_mult, // ready to multiply             
+     
+    input  logic                    EN_blockRead, // high to read from mem block           
+    output logic                    VALID_memVal, // high for valid mem val           
+    output logic [WIDTH-1:0]        memVal_data, // mem data            
+
+    output logic                    EN_readMem, // high to start reading mem             
+    output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
+    input  logic [WIDTH-1:0]        readMem_val // data read from mem               
+);
+    // state stuff
+    state_t state, next_state;
+
+    // flags
+    logic first_write = 1'b0; 
+    logic first_read = 1'b0; 
+    logic first_VALID_memVal = 1'b0; 
+
+    logic [WIDTH-1: 0] product;
+
+    // multiplication logic
+    always_ff @(posedge clk) begin
+        product <= mult_input0 * mult_input1;
+        writeMem_val <= product;
     end
-    
-    // Combinational multiply
-    assign mult_result = operandA * operandB;
-    
-    // Memory write control (Port B - Write)
-    logic write_en;
-    assign write_en = mult_valid_d2 && !mem_full;
-    assign d = mult_result_d2;
-    assign cenB = !write_en;  // Active low, so invert
-    
-    // Write counter and address
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            write_count <= 7'h0;
-            aB <= 6'h0;
-        end else begin
-            if (current_state == READING && read_done) begin
-                // Only reset after reading is complete
-                write_count <= 7'h0;
-                aB <= 6'h0;
-            end else if (write_en) begin  // Only increment on actual writes
-                if (write_count < 7'd64) begin
-                    write_count <= write_count + 1'b1;
-                    aB <= aB + 1'b1;
-                end
-            end
-        end
-    end
-    
-    // Memory full flag - full when we've written 64 items (count reaches 64)
-    // But we need to check that writes have actually happened
-    logic mem_full_flag;
-    
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mem_full_flag <= 1'b0;
-        end else begin
-            if (current_state == IDLE || current_state == READING) begin
-                mem_full_flag <= 1'b0;
-            end else if (write_count == 7'd64) begin  // Now 7-bit comparison
-                mem_full_flag <= 1'b1;
-            end
-        end
-    end
-    
-    assign mem_full = mem_full_flag;
-    
-    // Read counter and address (Port A - Read)
-    // Note: registerArray has 1-cycle read latency (output is registered)
-    // We need to output 64 valid reads, so we need to:
-    // - Issue 64 addresses (0-63)
-    // - Keep VALID high for 64 cycles (cycles when data is available)
-    
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            read_count <= 7'h0;
-            aA <= 6'h0;
-            cenA <= 1'b1;  // Disabled by default
-        end else begin
-            if (current_state == READING) begin
-                if (read_count < 7'd65) begin  // Count to 65 (0-64)
-                    cenA <= 1'b0;  // Enable reading (active low)
-                    if (read_count < 7'd64) begin
-                        aA <= read_count[5:0];  // Set addresses 0-63
-                    end
-                    read_count <= read_count + 1'b1;
-                end else begin
-                    cenA <= 1'b1;  // Disable after done
-                end
-            end else if (current_state == MEM_FULL) begin
-                // Reset for next read cycle
-                read_count <= 7'h0;
-                aA <= 6'h0;
-                cenA <= 1'b1;
-            end else begin
-                read_count <= 7'h0;
-                aA <= 6'h0;
-                cenA <= 1'b1;  // Disabled
-            end
-        end
-    end
-    
-    // Done after counting to 65 (issued 64 addresses + 1 cycle for last data)
-    assign read_done = (read_count >= 7'd65);
-    
-    // FSM: State register with asynchronous reset
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            current_state <= IDLE;
-        else
-            current_state <= next_state;
-    end
-    
-    // FSM: Next state logic
+
     always_comb begin
-        next_state = current_state;
+        // product = mult_input0 * mult_input1;
+        memVal_data = readMem_val;   
+    end
+
+    // state transition/behaviour logic
+    always_ff @(posedge clk) begin
+        // next_state = state; // default hold
+
+        if (rst) begin
+            state = IDLE;
+            next_state = IDLE;
+            // // initialize all i/o
+            // EN_writeMem = 1'b0;
+            // writeMem_addr = 6'b0;
+            // writeMem_val = 16'b0;
+            // RDY_mult = 1'b0;
+            // VALID_memVal = 1'b0;
+            // EN_readMem = 1'b0;
+            // readMem_addr = 6'b0;
+        end
+        else
+            // transition to next state
+            state = next_state;
+
+        // state = next_state;
         
-        case (current_state)
+        unique case (state)
+
             IDLE: begin
-                if (EN_mult && !mem_full)
-                    next_state = MULTIPLYING;
-            end
-            
-            MULTIPLYING: begin
-                if (mem_full)
-                    next_state = MEM_FULL;
-                else if (!EN_mult && write_count == 0)
-                    next_state = IDLE;  // Return to idle if no operation
-            end
-            
-            MEM_FULL: begin
-                if (EN_readMem)
-                    next_state = READING;
-            end
-            
-            READING: begin
-                if (read_done)
+                first_write = 1'b0; //set flag
+                
+                // initialize write signals
+                RDY_mult = 1'b1;
+                EN_readMem = 1'b0;
+                writeMem_addr = 1'b0;
+                EN_writeMem = 1'b0;
+
+                // // initialize write signals
+                // readMem_addr = 1'b0;
+                VALID_memVal = 1'b0; 
+
+                // determine next state
+                if (EN_mult == 1'b1) begin
+                    // EN_writeMem = 1'b1;
+                    // state = WRITE;
+                    next_state = WRITE;
+                end
+                else begin
                     next_state = IDLE;
+                end
             end
-            
+
+            WRITE: begin
+                // initialize write signals
+                EN_writeMem = 1'b1;
+
+                // initialize write signals
+                readMem_addr = 1'b0;
+                VALID_memVal = 1'b0; 
+
+                // determine value of RDY_mult
+                if (writeMem_addr < 6'd61)
+                    RDY_mult = 1'b1;
+                else
+                    RDY_mult = 1'b0;
+
+                // // determine EN_writeMem and next state
+                // if (EN_mult == 1'b0) begin
+                //     EN_writeMem = 1'b0;
+                //     next_state = IDLE;
+                // end
+                // else begin
+                //     EN_writeMem = 1'b1;
+
+                //     if (writeMem_addr < 6'd62)
+                //         next_state = WRITE;
+                //     else
+                //         next_state = FULL;
+                // end
+
+                if (writeMem_addr <= 6'd62) begin
+                    next_state = WRITE;
+
+                    // determine value of writeMem_addr
+                    writeMem_addr = !first_write ?  6'b0 : writeMem_addr + 1;
+                    first_write = 1'b1;
+                end
+                else begin
+                    next_state = FULL;
+                    EN_writeMem = 1'b0;
+                    writeMem_addr = 6'b0;
+                end
+
+
+                // // determine value of writeMem_addr
+                // writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
+                // first_write = 1'b1;
+
+                // writeMem_addr = writeMem_addr + 1;
+            end
+
+            FULL: begin
+                // initialize write signals
+                RDY_mult = 1'b0;
+
+                // initialize read signals
+                EN_writeMem = 1'b0;
+                writeMem_addr = 6'b0;
+                EN_readMem = 1'b0;
+                readMem_addr = 1'b0;
+
+                // set flag
+                first_read = 1'b0; 
+
+                // // determine next state
+                // if (EN_mult == 1'b1) begin
+                //     next_state = FULL;
+                // end 
+                // else begin
+                //     if (EN_blockRead == 1'b1) begin
+                //         state = READ;
+                //         next_state = READ;
+                //         EN_readMem = 1'b1;
+                //         readMem_addr = 6'b0;
+                //     end
+                //     else 
+                //         next_state = FULL;
+                // end
+
+                if (EN_blockRead == 1'b1) begin
+                    // state = READ;
+                    next_state = READ;
+                    EN_readMem = 1'b1;
+                    readMem_addr = 6'b0;
+                end
+                else 
+                    next_state = FULL;
+
+            end
+
+            READ: begin
+                // // set flag
+                // first_VALID_memVal = 1'b0;
+
+                // VALID_memVal = 1'b1;
+                // memVal_data <= readMem_val;                
+                
+                // determine next state
+                if (readMem_addr < 6'd63) begin
+                    next_state = READ;
+                    EN_readMem = 1'b1;
+                    readMem_addr = readMem_addr + 1;
+                    // readMem_addr = !first_read ?  6'b0 : readMem_addr + 1;
+                    // VALID_memVal = !first_read ?  1'b0 : 1'b1;
+                    VALID_memVal = 1'b1;
+                    first_read = 1'b1;
+                end
+                else begin
+                    next_state = IDLE;
+                    RDY_mult = 1'b1;
+                    EN_readMem = 1'b0;
+                end
+
+                // // determine value for VALID_memVal
+                // if (EN_readMem == 1'b0)
+                //     VALID_memVal = 1'b0;
+                // else
+                //     VALID_memVal = 1'b1;
+
+                // determine value of writeMem_addr
+
+                // readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
+                // first_read = 1'b1;
+
+            end
+
             default: next_state = IDLE;
         endcase
     end
-    
-    // FSM: Output logic
-    // Account for 1-cycle memory read latency
-    // VALID should be high when data is actually available (1 cycle after address)
-    always_comb begin
-        // Default values
-        RDY_mult = 1'b0;
-        RDY_readMem = 1'b0;
-        VALID_memVal = 1'b0;
-        
-        case (current_state)
-            IDLE: begin
-                RDY_mult = 1'b1;
-                RDY_readMem = 1'b0;
-            end
-            
-            MULTIPLYING: begin
-                RDY_mult = !mem_full;
-                RDY_readMem = 1'b0;
-            end
-            
-            MEM_FULL: begin
-                RDY_mult = 1'b0;
-                RDY_readMem = 1'b1;
-            end
-            
-            READING: begin
-                RDY_mult = 1'b0;
-                RDY_readMem = 1'b0;
-                // VALID is high from cycle 1 through cycle 64 (when data is available)
-                VALID_memVal = (read_count >= 7'd1) && (read_count <= 7'd64);
-            end
-        endcase
-    end
-    
-    // Memory output
-    assign memVal = q;
-    
-    // Instantiate memory unit (2-port memory)
-    // Port A is read, Port B is write
-    memory_wrapper_2port #(
-        .DEPTH(64),
-        .LOGDEPTH(6),
-        .WIDTH(32),
-        .MEMTYPE(0),
-        .TECHNODE(0),
-        .COL_MUX(1)
-    ) mem_inst (
-        // Port A: Read
-        .clkA(clk),
-        .aA(aA),
-        .cenA(cenA),
-        .q(q),
-        // Port B: Write
-        .clkB(clk),
-        .aB(aB),
-        .cenB(cenB),
-        .d(d)
-    );
 
 endmodule
