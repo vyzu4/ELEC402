@@ -44,21 +44,23 @@ module multiplier #(
 
     // multiplication logic
     always_ff @(posedge clk) begin
+        writeMem_val = product;
+        product = 32'b0;
+
         if (state==IDLE) begin
-            product <= 32'b0;
+            product = 32'b0;
         end else begin
-             product <= mult_input0 * mult_input1;
+             product = mult_input0 * mult_input1;
         end
         // if (temp_flip==1'b1) begin
         //     temp_prod<=mult_input0 * mult_input1;
         // end
         // temp_flip = ~temp_flip;
-        writeMem_val <= product;
     end
 
-    always_ff @(negedge clk) begin
-        product <= 32'b0;
-    end
+    // always_ff @(negedge clk) begin
+    //     product <= 32'b0;
+    // end
 
     always_comb begin
         // product = mult_input0 * mult_input1;
