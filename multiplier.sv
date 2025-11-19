@@ -108,25 +108,9 @@ endtask
   // always #1.25 clk = ~clk; // 400 MHz
   always #0.625 clk = ~clk; // 800 MHz
 
-  // always begin
-  //   // #1.25; 
-  //   // assign mult_input0 = 16'd65535; 
-  //   // assign mult_input1 = 16'd65535; 
-
-  //   #1.25;
-  //   assign mult_input0 = 1; 
-  //   assign mult_input1 = writeMem_addr; 
-  // end
-
-  always begin
-    #0.05; 
-    // assign mult_input0 = 16'd65535; 
-    // assign mult_input1 = 16'd65535; 
-    if (rst==1'b0)begin
-      #1.20;
-      assign mult_input0 = 1; 
-      mult_input1 = writeMem_addr; 
-    end
+  always @(negedge clk) begin
+      mult_input0 <= writeMem_addr;
+      mult_input1 <= writeMem_addr;
   end
 
 logic [31:0] inputs_vector [0:63];
