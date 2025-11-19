@@ -18,7 +18,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    output reg [WIDTH-1:0]          writeMem_val,  // 
+    output reg  [WIDTH-1:0]          writeMem_val,  // 
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -31,14 +31,14 @@ module multiplier #(
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
     // state stuff
-    state_t state, next_state;
+    (* preserve = "true" *) state_t state, next_state;
 
     // flags
-    logic first_write = 1'b0; 
-    logic first_read = 1'b0; 
-    logic first_VALID_memVal = 1'b0; 
+    (* preserve = "true" *) logic first_write = 1'b0; 
+    (* preserve = "true" *) logic first_read = 1'b0; 
+    (* preserve = "true" *) logic first_VALID_memVal = 1'b0; 
 
-    logic [WIDTH-1: 0] product;
+    (* preserve = "true" *) logic [WIDTH-1: 0] product;
 
     // multiplication logic
     always_ff @(posedge clk) begin
