@@ -38,11 +38,17 @@ module multiplier #(
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [WIDTH-1: 0] product;
+    logic [WIDTH-1: 0] product, temp_prod;
+
+    logic temp_flip =1'b0;
 
     // multiplication logic
     always_ff @(posedge clk) begin
         product <= mult_input0 * mult_input1;
+        if (temp_flip==1'b1) begin
+            temp_prod<=mult_input0 * mult_input1;
+        end
+        temp_flip = ~temp_flip;
         writeMem_val <= product;
     end
 
