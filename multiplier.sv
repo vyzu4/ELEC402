@@ -48,7 +48,7 @@ module multiplier #(
 
     logic signed [31:0] intermediate_sum;
 
-    // logic signed [31:0] delay = 0;
+    logic signed [3:0] delay = 4'b0;
 
     always @(posedge clk) begin
         if (EN_mult && RDY_mult) begin
@@ -117,7 +117,8 @@ module multiplier #(
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
                     // if (delay > 4) 
-                        next_state = WRITE;
+                    next_state = WRITE;
+                    delay <= delay + 1;
                 end
                 else begin
                     next_state = IDLE;
@@ -220,7 +221,7 @@ module multiplier #(
 
                 // VALID_memVal = 1'b1;
                 // memVal_data <= readMem_val;  
-                // delay = 0;              
+                delay = 0;              
                 
                 // determine next state
                 if (readMem_addr < 6'd63) begin
