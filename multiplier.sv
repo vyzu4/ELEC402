@@ -49,18 +49,19 @@ module multiplier #(
     // Stage 1: Perform 4 smaller 16x16 multiplications
     logic signed [15:0] p00, p01, p10, p11;
 
-    always_comb begin
-        p00 = mult_input0[7:0] * mult_input1[7:0];
-        p01 = mult_input0[7:0] * mult_input1[15:8];
-        p10 = mult_input0[15:8] * mult_input1[7:0];
-        p11 = mult_input0[15:8] * mult_input1[15:8];
-        product = p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
-    end
+    logic signed [31:0] intermediate_sum;
+
+    // always_comb begin
+    //     p00 = mult_input0[7:0] * mult_input1[7:0];
+    //     p01 = mult_input0[7:0] * mult_input1[15:8];
+    //     p10 = mult_input0[15:8] * mult_input1[7:0];
+    //     p11 = mult_input0[15:8] * mult_input1[15:8];
+    // end
 
     // // Stage 2: Add partial products with appropriate shifts
     // logic signed [63:0] intermediate_sum;
     // always @(posedge clk) begin
-    //     product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+    //     intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     // end
     
     // // Stage 3: Register the final output
@@ -69,9 +70,22 @@ module multiplier #(
     // end
 
     // multiplication logic
-    always_ff @(negedge clk) begin
-        writeMem_val <= product;
+    always_comb begin
+        p00 = mult_input0[7:0] * mult_input1[7:0];
+        p01 = mult_input0[7:0] * mult_input1[15:8];
+        p10 = mult_input0[15:8] * mult_input1[7:0];
+        p11 = mult_input0[15:8] * mult_input1[15:8];
     end
+
+    always @(negedge clk) begin
+        product = p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+        writeMem_val = product;
+    end
+
+    // // multiplication logic
+    // always_ff @(negedge clk) begin
+    //     writeMem_val <= product;
+    // end
 
     always_comb begin
         // multiplying logic
