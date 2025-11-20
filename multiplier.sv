@@ -30,6 +30,10 @@ module multiplier #(
     output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
+
+    // Stage 1: Perform 4 smaller 16x16 multiplications
+    logic signed [15:0] p00, p01, p10, p11;
+
     // state stuff
     (* dont_touch = "true" *) state_t state, next_state;
 
@@ -46,9 +50,30 @@ module multiplier #(
     end
 
     always_comb begin
-        product = mult_input0 * mult_input1;
+        // product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
+
+
+
+    always @(posedge clk) begin
+        p00 <= mult_input0[7:0] * mult_input1[7:0];
+        p01 <= mult_input0[7:0] * mult_input1[15:8];
+        p10 <= mult_input0[15:8] * mult_input1[7:0];
+        p11 <= mult_input0[15:8] * mult_input1[15:8];
+    end
+
+    // Stage 2: Add partial products with appropriate shifts
+    logic signed [31:0] intermediate_sum;
+    always @(posedge clk) begin
+        intermediate_sum <= p00 + (p01 << 8) + (p10 << 8) + (p11 << 16);
+    end
+    
+    // Stage 3: Register the final output
+    always @(posedge clk) begin
+        product <= intermediate_sum;
+    end
+
 
     // state transition/behaviour logic
     always_ff @(posedge clk) begin
