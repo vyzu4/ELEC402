@@ -47,6 +47,8 @@ module multiplier #(
     // Stage 1: Perform 4 smaller 16x16 multiplications
     logic signed [15:0] p00, p01, p10, p11;
 
+    logic signed [63:0] intermediate_sum, intermediate_sum1, intermediate_sum2;
+
     always @(posedge clk) begin
         p00 <= mult_input0[7:0] * mult_input1[7:0];
         p01 <= mult_input0[7:0] * mult_input1[15:8];
@@ -54,10 +56,13 @@ module multiplier #(
         p11 <= mult_input0[15:8] * mult_input1[15:8];
     end
 
-    // Stage 2: Add partial products with appropriate shifts
-    logic signed [63:0] intermediate_sum;
     always @(posedge clk) begin
-        intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+        intermediate_sum1 <= p00 + (p01 << 16);
+        intermediate_sum2 <= (p10 << 16) + (p11 << 32);
+    end
+
+    always @(posedge clk) begin
+        intermediate_sum <= intermediate_sum1 + intermediate_sum2;
     end
     
     // Stage 3: Register the final output
