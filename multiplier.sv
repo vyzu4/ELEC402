@@ -44,6 +44,8 @@ module multiplier #(
 
     (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
+    logic signed [31:0] intermediate_sum, intermediate_sum_2;
+
     // multiplication logic
     always_ff @(posedge clk) begin
         writeMem_val <= product;
@@ -54,26 +56,20 @@ module multiplier #(
         memVal_data = readMem_val;   
     end
 
-
-
-    always @(posedge clk) begin
-        p00 <= mult_input0[7:0] * mult_input1[7:0];
-        p01 <= mult_input0[7:0] * mult_input1[15:8];
-        p10 <= mult_input0[15:8] * mult_input1[7:0];
-        p11 <= mult_input0[15:8] * mult_input1[15:8];
+    always_comb begin
+        p00 = mult_input0[7:0] * mult_input1[7:0];
+        p01 = mult_input0[7:0] * mult_input1[15:8];
+        p10 = mult_input0[15:8] * mult_input1[7:0];
+        p11 = mult_input0[15:8] * mult_input1[15:8];
     end
 
-    // Stage 2: Add partial products with appropriate shifts
-    logic signed [31:0] intermediate_sum;
     always @(posedge clk) begin
         intermediate_sum <= p00 + (p01 << 8) + (p10 << 8) + (p11 << 16);
     end
     
-    // Stage 3: Register the final output
     always @(posedge clk) begin
         product <= intermediate_sum;
     end
-
 
     // state transition/behaviour logic
     always_ff @(posedge clk) begin
