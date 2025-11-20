@@ -118,7 +118,7 @@ module multiplier #(
                     // state = WRITE;
                     // if (delay > 4) 
                     next_state = WRITE;
-                    delay <= delay + 1;
+                    delay = delay + 1;
                 end
                 else begin
                     next_state = IDLE;
