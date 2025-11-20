@@ -113,7 +113,7 @@ module multiplier #(
                 VALID_memVal = 1'b0; 
 
                 // determine next state
-                if ((EN_mult == 1'b1) && (delay > 4)) begin
+                if ((EN_mult == 1'b1) && (delay % 4 == 0)) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
                     // if (delay > 4) 
@@ -124,7 +124,7 @@ module multiplier #(
                     next_state = IDLE;
                 end
 
-                // delay = delay + 1;
+                delay = delay + 1;
             end
 
             WRITE: begin
@@ -249,6 +249,8 @@ module multiplier #(
 
                 // readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
                 // first_read = 1'b1;
+
+                delay = 4'b0;
 
             end
 
