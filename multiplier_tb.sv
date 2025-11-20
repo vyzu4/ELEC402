@@ -94,15 +94,15 @@ multiplier #(
   // Clock generator
   initial clk = 1;
   // always #1.25 clk = ~clk; // 400 MHz
-  always #0.63 clk = ~clk; // 800 MHz
+  always #1.23 clk = ~clk; // 800 MHz
 
 // Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
-always @(posedge clk) begin
-    #0.1;   // 50 ps after posedge
-    mult_input0 <= writeMem_addr;
-    mult_input1 <= writeMem_addr;
+always_comb begin
+    // #0.1;   // 50 ps after posedge
+    mult_input0 = writeMem_addr;
+    mult_input1 = writeMem_addr;
 end
 
 logic [31:0] inputs_vector [0:63];
@@ -116,69 +116,14 @@ logic [31:0] outputs_vector [0:63];
 
     // generate_vectors(inputs_vector, outputs_vector);
 
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
-    // 
-    #5 EN_mult = 1; // enable writing   
-    #80; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #80; // finish reading
+    for (int i = 0; i < 8; i++) begin
+      #5 EN_mult = 1; // enable writing   
+      #160; // finish multiplying
+      #2.5 EN_mult = 0; // stop writing
+      #2.5 EN_blockRead = 1; // enable reading
+      #2.5 EN_blockRead = 0;
+      #160; // finish reading
+    end
 
     $stop;
   end
