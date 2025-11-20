@@ -81,8 +81,12 @@ module multiplier #(
         product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
+    always @(posedge clk) begin
+        intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+    end
+
     // multiplication logic
-    always_ff @(posedge clk) begin
+    always_ff @(negedge clk) begin
         writeMem_val <= product;
     end
 
