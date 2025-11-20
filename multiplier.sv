@@ -120,7 +120,12 @@ module multiplier #(
 
     // Stage 3: Register the final output
     always_ff @(posedge clk) begin
-        product <= intermediate_sum;
+        intermediate_sum_2 <= intermediate_sum;
+    end
+
+    // Stage 3: Register the final output
+    always_ff @(posedge clk) begin
+        product <= intermediate_sum_2;
     end
 
     // multiplication logic
