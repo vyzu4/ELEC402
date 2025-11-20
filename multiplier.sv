@@ -38,9 +38,6 @@ module multiplier #(
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    reg [16-1: 0] mult_input_a;
-    reg [16-1: 0] mult_input_b;
-
     reg [WIDTH-1: 0] product;
 
 
@@ -48,13 +45,11 @@ module multiplier #(
 
     // multiplication logic
     always_ff @(posedge clk) begin
-        mult_input_a <= mult_input0;
-        mult_input_b <= mult_input1;
         writeMem_val <= product;
     end
 
     always_comb begin
-        product = mult_input_a * mult_input_b;
+        product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
 
