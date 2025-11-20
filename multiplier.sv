@@ -51,12 +51,12 @@ module multiplier #(
     logic signed [31:0] delay = 0;
 
     always @(posedge clk) begin
-        if (EN_mult && RDY_mult) begin
+        // if (EN_mult && RDY_mult) begin
             p00 <= mult_input0[7:0] * mult_input1[7:0];
             p01 <= mult_input0[7:0] * mult_input1[15:8];
             p10 <= mult_input0[15:8] * mult_input1[7:0];
             p11 <= mult_input0[15:8] * mult_input1[15:8];
-        end
+        // end
     end
 
     always @(posedge clk) begin
