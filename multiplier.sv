@@ -18,7 +18,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    (* dont_touch = "true" *) output reg [WIDTH-1:0]        writeMem_val,  
+    output reg [WIDTH-1:0]        writeMem_val,  
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -35,32 +35,26 @@ module multiplier #(
     logic signed [15:0] p00, p01, p10, p11;
 
     // state stuff
-    (* dont_touch = "true" *) state_t state, next_state;
+    state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
+    reg [WIDTH-1: 0] product;
 
-    logic signed [31:0] intermediate_sum, intermediate_sum_2;
+    logic [31:0] intermediate_sum;
 
-    // multiplication logic
-    always_ff @(posedge clk) begin
-        writeMem_val <= product;
-    end
+    logic [31:0] delay = 0;
 
-    always_comb begin
-        // product = mult_input0 * mult_input1;
-        memVal_data = readMem_val;   
-    end
-
-    always_comb begin
-        p00 = mult_input0[7:0] * mult_input1[7:0];
-        p01 = mult_input0[7:0] * mult_input1[15:8];
-        p10 = mult_input0[15:8] * mult_input1[7:0];
-        p11 = mult_input0[15:8] * mult_input1[15:8];
+    always @(posedge clk) begin
+        if (EN_mult && RDY_mult) begin
+            p00 <= mult_input0[7:0] * mult_input1[7:0];
+            p01 <= mult_input0[7:0] * mult_input1[15:8];
+            p10 <= mult_input0[15:8] * mult_input1[7:0];
+            p11 <= mult_input0[15:8] * mult_input1[15:8];
+        end
     end
 
     always @(posedge clk) begin
@@ -69,6 +63,14 @@ module multiplier #(
     
     always @(posedge clk) begin
         product <= intermediate_sum;
+    end
+
+    always_ff @(posedge clk) begin
+        writeMem_val <= product;
+    end
+
+    always_comb begin
+        memVal_data = readMem_val;   
     end
 
     // state transition/behaviour logic
@@ -112,11 +114,14 @@ module multiplier #(
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    next_state = WRITE;
+                    if (delay > 4)
+                        next_state = WRITE; 
                 end
                 else begin
                     next_state = IDLE;
                 end
+
+                delay = delay + 1;
             end
 
             WRITE: begin
@@ -212,7 +217,9 @@ module multiplier #(
                 // first_VALID_memVal = 1'b0;
 
                 // VALID_memVal = 1'b1;
-                // memVal_data <= readMem_val;                
+                // memVal_data <= readMem_val; 
+
+                delay = 0;               
                 
                 // determine next state
                 if (readMem_addr < 6'd63) begin
