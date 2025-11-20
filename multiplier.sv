@@ -48,15 +48,15 @@ module multiplier #(
 
     logic signed [31:0] intermediate_sum;
 
-    logic signed [31:0] delay = 0;
+    // logic signed [31:0] delay = 0;
 
     always @(posedge clk) begin
-        // if (EN_mult && RDY_mult) begin
+        if (EN_mult && RDY_mult) begin
             p00 <= mult_input0[7:0] * mult_input1[7:0];
             p01 <= mult_input0[7:0] * mult_input1[15:8];
             p10 <= mult_input0[15:8] * mult_input1[7:0];
             p11 <= mult_input0[15:8] * mult_input1[15:8];
-        // end
+        end
     end
 
     always @(posedge clk) begin
@@ -116,14 +116,14 @@ module multiplier #(
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    if (delay > 4) 
+                    // if (delay > 4) 
                         next_state = WRITE;
                 end
                 else begin
                     next_state = IDLE;
                 end
 
-                delay = delay + 1;
+                // delay = delay + 1;
             end
 
             WRITE: begin
@@ -220,7 +220,7 @@ module multiplier #(
 
                 // VALID_memVal = 1'b1;
                 // memVal_data <= readMem_val;  
-                delay = 0;              
+                // delay = 0;              
                 
                 // determine next state
                 if (readMem_addr < 6'd63) begin
