@@ -106,6 +106,34 @@ module multiplier #(
         // a2 = a_s1[11:8], a3 = a_s1[15:12]
         // b0..b3 from b_s1
 
+        // // row 2 (a2 * b?)
+        // p20 <= a_s1[11: 8] * b_s1[ 3: 0]; // a2*b0
+        // p21 <= a_s1[11: 8] * b_s1[ 7: 4]; // a2*b1
+        // p22 <= a_s1[11: 8] * b_s1[11: 8]; // a2*b2
+        // p23 <= a_s1[11: 8] * b_s1[15:12]; // a2*b3
+
+        // // row 3 (a3 * b?)
+        // p30 <= a_s1[15:12] * b_s1[ 3: 0]; // a3*b0
+        // p31 <= a_s1[15:12] * b_s1[ 7: 4]; // a3*b1
+        // p32 <= a_s1[15:12] * b_s1[11: 8]; // a3*b2
+        // p33 <= a_s1[15:12] * b_s1[15:12]; // a3*b3
+    end
+
+    always_ff @(posedge clk) begin
+        // // forward first-half partials so all 16 are aligned in this stage
+        // p00 <= p00_s1;
+        // p01 <= p01_s1;
+        // p02 <= p02_s1;
+        // p03 <= p03_s1;
+
+        // p10 <= p10_s1;
+        // p11 <= p11_s1;
+        // p12 <= p12_s1;
+        // p13 <= p13_s1;
+
+        // // a2 = a_s1[11:8], a3 = a_s1[15:12]
+        // // b0..b3 from b_s1
+
         // row 2 (a2 * b?)
         p20 <= a_s1[11: 8] * b_s1[ 3: 0]; // a2*b0
         p21 <= a_s1[11: 8] * b_s1[ 7: 4]; // a2*b1
