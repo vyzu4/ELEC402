@@ -18,7 +18,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    (* dont_touch = "true" *) output reg [WIDTH-1:0]        writeMem_val,  
+    output reg [WIDTH-1:0]        writeMem_val,  
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -32,43 +32,45 @@ module multiplier #(
 );
 
     // Stage 1: Perform 4 smaller 16x16 multiplications
-    logic signed [15:0] p00, p01, p10, p11;
+    // logic signed [15:0] p00, p01, p10, p11;
 
     // state stuff
-    (* dont_touch = "true" *) state_t state, next_state;
+    state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
+    reg [WIDTH-1: 0] product;
 
-    logic signed [31:0] intermediate_sum, intermediate_sum_2;
+    // Stage 1: Perform 4 smaller 16x16 multiplications
+    logic signed [15:0] p00, p01, p10, p11;
 
-    // multiplication logic
-    always_ff @(posedge clk) begin
-        writeMem_val <= product;
-    end
-
-    always_comb begin
-        // product = mult_input0 * mult_input1;
-        memVal_data = readMem_val;   
-    end
+    logic signed [63:0] intermediate_sum, intermediate_sum1, intermediate_sum2;
 
     always_comb begin
         p00 = mult_input0[7:0] * mult_input1[7:0];
         p01 = mult_input0[7:0] * mult_input1[15:8];
         p10 = mult_input0[15:8] * mult_input1[7:0];
         p11 = mult_input0[15:8] * mult_input1[15:8];
+
+        product = p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
-    always @(posedge clk) begin
-        intermediate_sum <= p00 + (p01 << 8) + (p10 << 8) + (p11 << 16);
+    always @(negedge clk) begin
+        // product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+        writeMem_val <= product;
     end
-    
-    always @(posedge clk) begin
-        product <= intermediate_sum;
+
+    // // multiplication logic
+    // always_ff @(posedge clk) begin
+    //     writeMem_val <= product;
+    // end
+
+    always_comb begin
+        // product = mult_input0 * mult_input1;
+        memVal_data = readMem_val;   
     end
 
     // state transition/behaviour logic
