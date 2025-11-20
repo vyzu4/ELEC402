@@ -9,7 +9,7 @@ module multiplier #(
     parameter LOGDEPTH = 6,
     parameter WIDTH = 32
 ) (
-    input  logic                    clk,
+    input  logic                    clk, //
     input  logic                    rst,      
 
     input  logic                    EN_mult, // high to start multiplication
@@ -18,7 +18,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    output logic [WIDTH-1:0]        writeMem_val,  
+    (* dont_touch = "true" *) output reg [WIDTH-1:0]        writeMem_val,  
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -31,17 +31,14 @@ module multiplier #(
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
     // state stuff
-    state_t state, next_state;
+    (* dont_touch = "true" *) state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    reg [WIDTH-1: 0] product;
-
-
-
+    (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
     // multiplication logic
     always_ff @(posedge clk) begin
