@@ -47,14 +47,15 @@ module multiplier #(
     // -------------------------------------------------------------------------
     // Stage 1: 4x4 partial products (registered)
     // -------------------------------------------------------------------------
-    logic unsigned [7:0] p00, p01, p02, p03;
-    logic unsigned [7:0] p10, p11, p12, p13;
-    logic unsigned [7:0] p20, p21, p22, p23;
-    logic unsigned [7:0] p30, p31, p32, p33;
+    logic [7:0] p00, p01, p02, p03;
+    logic [7:0] p10, p11, p12, p13;
+    logic [7:0] p20, p21, p22, p23;
+    logic [7:0] p30, p31, p32, p33;
 
     always_ff @(posedge clk) begin
-        // a0 = mult_input0[3:0], a1 = mult_input0[7:4], a2 = mult_input0[11:8], a3 = mult_input0[15:12]
-        // b0 = mult_input1[3:0], b1 = mult_input1[7:4], b2 = mult_input1[11:8], b3 = mult_input1[15:12]
+        // a0..a3, b0..b3 are 4-bit quarters (nibbles)
+        // a0 = mult_input0[3:0],  a1 = mult_input0[7:4],  a2 = mult_input0[11:8], a3 = mult_input0[15:12]
+        // b0 = mult_input1[3:0],  b1 = mult_input1[7:4],  b2 = mult_input1[11:8], b3 = mult_input1[15:12]
 
         // row 0 (a0 * b?)
         p00 <= mult_input0[ 3: 0] * mult_input1[ 3: 0]; // a0*b0
@@ -82,70 +83,78 @@ module multiplier #(
     end
 
     // -------------------------------------------------------------------------
-    // Stage 2 (comb): Shift partial products and sum with an internal adder tree
+    // Combinational: shift partial products + explicit adder tree (no loops)
     // -------------------------------------------------------------------------
 
-    // 16 shifted partial products, each 32-bit signed
-    logic unsigned [31:0] shifted_pp [0:15];
+    // Shifted partial products (32-bit)
+    logic [31:0] spp0,  spp1,  spp2,  spp3;
+    logic [31:0] spp4,  spp5,  spp6,  spp7;
+    logic [31:0] spp8,  spp9,  spp10, spp11;
+    logic [31:0] spp12, spp13, spp14, spp15;
+
+    // Tree levels
+    logic [31:0] lvl1_0, lvl1_1, lvl1_2, lvl1_3;
+    logic [31:0] lvl1_4, lvl1_5, lvl1_6, lvl1_7;
+
+    logic [31:0] lvl2_0, lvl2_1, lvl2_2, lvl2_3;
+    logic [31:0] lvl3_0, lvl3_1;
+    logic [31:0] sum_comb;
 
     always_comb begin
         // shift amount = 4 * (i + j) for p_ij
 
-        shifted_pp[ 0] = (p00) <<< 0;   // a0*b0 * 2^0
-        shifted_pp[ 1] = (p01) <<< 4;   // a0*b1 * 2^4
-        shifted_pp[ 2] = (p02) <<< 8;   // a0*b2 * 2^8
-        shifted_pp[ 3] = (p03) <<< 12;  // a0*b3 * 2^12
+        // row 0
+        spp0  = p00 << 0;   // a0*b0 * 2^0
+        spp1  = p01 << 4;   // a0*b1 * 2^4
+        spp2  = p02 << 8;   // a0*b2 * 2^8
+        spp3  = p03 << 12;  // a0*b3 * 2^12
 
-        shifted_pp[ 4] = (p10) <<< 4;   // a1*b0 * 2^4
-        shifted_pp[ 5] = (p11) <<< 8;   // a1*b1 * 2^8
-        shifted_pp[ 6] = (p12) <<< 12;  // a1*b2 * 2^12
-        shifted_pp[ 7] = (p13) <<< 16;  // a1*b3 * 2^16
+        // row 1
+        spp4  = p10 << 4;   // a1*b0 * 2^4
+        spp5  = p11 << 8;   // a1*b1 * 2^8
+        spp6  = p12 << 12;  // a1*b2 * 2^12
+        spp7  = p13 << 16;  // a1*b3 * 2^16
 
-        shifted_pp[ 8] = (p20) <<< 8;   // a2*b0 * 2^8
-        shifted_pp[ 9] = (p21) <<< 12;  // a2*b1 * 2^12
-        shifted_pp[10] = (p22) <<< 16;  // a2*b2 * 2^16
-        shifted_pp[11] = (p23) <<< 20;  // a2*b3 * 2^20
+        // row 2
+        spp8  = p20 << 8;   // a2*b0 * 2^8
+        spp9  = p21 << 12;  // a2*b1 * 2^12
+        spp10 = p22 << 16;  // a2*b2 * 2^16
+        spp11 = p23 << 20;  // a2*b3 * 2^20
 
-        shifted_pp[12] = (p30) <<< 12;  // a3*b0 * 2^12
-        shifted_pp[13] = (p31) <<< 16;  // a3*b1 * 2^16
-        shifted_pp[14] = (p32) <<< 20;  // a3*b2 * 2^20
-        shifted_pp[15] = (p33) <<< 24;  // a3*b3 * 2^24
+        // row 3
+        spp12 = p30 << 12;  // a3*b0 * 2^12
+        spp13 = p31 << 16;  // a3*b1 * 2^16
+        spp14 = p32 << 20;  // a3*b2 * 2^20
+        spp15 = p33 << 24;  // a3*b3 * 2^24
+
+        // -------- explicit binary adder tree, no loops ----------
+
+        // Level 1: 16 -> 8
+        lvl1_0 = spp0  + spp1;
+        lvl1_1 = spp2  + spp3;
+        lvl1_2 = spp4  + spp5;
+        lvl1_3 = spp6  + spp7;
+        lvl1_4 = spp8  + spp9;
+        lvl1_5 = spp10 + spp11;
+        lvl1_6 = spp12 + spp13;
+        lvl1_7 = spp14 + spp15;
+
+        // Level 2: 8 -> 4
+        lvl2_0 = lvl1_0 + lvl1_1;
+        lvl2_1 = lvl1_2 + lvl1_3;
+        lvl2_2 = lvl1_4 + lvl1_5;
+        lvl2_3 = lvl1_6 + lvl1_7;
+
+        // Level 3: 4 -> 2
+        lvl3_0 = lvl2_0 + lvl2_1;
+        lvl3_1 = lvl2_2 + lvl2_3;
+
+        // Level 4: 2 -> 1
+        sum_comb = lvl3_0 + lvl3_1;
     end
 
-    // --- Internal binary adder tree: 16 -> 8 -> 4 -> 2 -> 1 ---
-    logic unsigned [31:0] lvl1 [0:7];
-    logic unsigned [31:0] lvl2 [0:3];
-    logic unsigned [31:0] lvl3 [0:1];
-    logic unsigned [31:0] sum_comb;
-
-    genvar gi;
-
-    // Level 1: 16 -> 8
-    generate
-        for (gi = 0; gi < 8; gi++) begin : GEN_LVL1
-            assign lvl1[gi] = shifted_pp[2*gi] + shifted_pp[2*gi + 1];
-        end
-    endgenerate
-
-    // Level 2: 8 -> 4
-    generate
-        for (gi = 0; gi < 4; gi++) begin : GEN_LVL2
-            assign lvl2[gi] = lvl1[2*gi] + lvl1[2*gi + 1];
-        end
-    endgenerate
-
-    // Level 3: 4 -> 2
-    generate
-        for (gi = 0; gi < 2; gi++) begin : GEN_LVL3
-            assign lvl3[gi] = lvl2[2*gi] + lvl2[2*gi + 1];
-        end
-    endgenerate
-
-    // Level 4: 2 -> 1
-    assign sum_comb = lvl3[0] + lvl3[1];
-
     // -------------------------------------------------------------------------
-    // Stage 2 (clocked): Register final 32-bit product
+    // Output register
     // -------------------------------------------------------------------------
     always_ff @(posedge clk) begin
         product <= sum_comb;
