@@ -44,54 +44,28 @@ module multiplier #(
 
     reg [WIDTH-1: 0] product;
 
-    logic [5:0] delay = 6'b0;
-
     // Stage 1: Perform 4 smaller 16x16 multiplications
     logic signed [15:0] p00, p01, p10, p11;
 
-    logic signed [31:0] intermediate_sum;
+    logic signed [63:0] intermediate_sum, intermediate_sum1, intermediate_sum2;
 
-    // always_comb begin
-    //     p00 = mult_input0[7:0] * mult_input1[7:0];
-    //     p01 = mult_input0[7:0] * mult_input1[15:8];
-    //     p10 = mult_input0[15:8] * mult_input1[7:0];
-    //     p11 = mult_input0[15:8] * mult_input1[15:8];
-    // end
-
-    // // Stage 2: Add partial products with appropriate shifts
-    // logic signed [63:0] intermediate_sum;
-    // always @(posedge clk) begin
-    //     intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
-    // end
-    
-    // // Stage 3: Register the final output
-    // always @(posedge clk) begin
-    //     product <= intermediate_sum;
-    // end
-
-    // multiplication logic
-    always_comb begin
-        p00 = mult_input0[7:0] * mult_input1[7:0];
-        p01 = mult_input0[7:0] * mult_input1[15:8];
-        p10 = mult_input0[15:8] * mult_input1[7:0];
-        p11 = mult_input0[15:8] * mult_input1[15:8];
-    end
-
-    always @(negedge clk) begin
-        product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+    always @(posedge clk) begin
+        p00 <= mult_input0[7:0] * mult_input1[7:0];
+        p01 <= mult_input0[7:0] * mult_input1[15:8];
+        p10 <= mult_input0[15:8] * mult_input1[7:0];
+        p11 <= mult_input0[15:8] * mult_input1[15:8];
     end
 
     always @(posedge clk) begin
-        intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+        writeMem_val <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
-    // multiplication logic
-    always_ff @(negedge clk) begin
-        writeMem_val <= product;
-    end
+    // // multiplication logic
+    // always_ff @(posedge clk) begin
+    //     writeMem_val <= product;
+    // end
 
     always_comb begin
-        // multiplying logic
         // product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
@@ -133,10 +107,8 @@ module multiplier #(
                 // readMem_addr = 1'b0;
                 VALID_memVal = 1'b0; 
 
-                delay = delay + 1;
-
                 // determine next state
-                if ((delay % 2 == 0) && (EN_mult == 1'b1)) begin
+                if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
                     next_state = WRITE;
@@ -160,13 +132,26 @@ module multiplier #(
                 else
                     RDY_mult = 1'b0;
 
+                // // determine EN_writeMem and next state
+                // if (EN_mult == 1'b0) begin
+                //     EN_writeMem = 1'b0;
+                //     next_state = IDLE;
+                // end
+                // else begin
+                //     EN_writeMem = 1'b1;
+
+                //     if (writeMem_addr < 6'd62)
+                //         next_state = WRITE;
+                //     else
+                //         next_state = FULL;
+                // end
+
                 if (writeMem_addr <= 6'd62) begin
                     next_state = WRITE;
 
                     // determine value of writeMem_addr
-                    writeMem_addr = !first_write ?  writeMem_addr : writeMem_addr + 1;
+                    writeMem_addr = !first_write ?  6'b0 : writeMem_addr + 1;
                     first_write = 1'b1;
-
                 end
                 else begin
                     next_state = FULL;
@@ -174,6 +159,12 @@ module multiplier #(
                     writeMem_addr = 6'b0;
                 end
 
+
+                // // determine value of writeMem_addr
+                // writeMem_addr = !first_write ?  1'b0 : writeMem_addr + 1;
+                // first_write = 1'b1;
+
+                // writeMem_addr = writeMem_addr + 1;
             end
 
             FULL: begin
