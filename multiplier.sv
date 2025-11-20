@@ -113,7 +113,7 @@ module multiplier #(
                 VALID_memVal = 1'b0; 
 
                 // determine next state
-                if ((EN_mult == 1'b1) && (delay % 4 == 0)) begin
+                if ((EN_mult == 1'b1)) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
                     // if (delay > 4) 
