@@ -18,7 +18,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    output reg [WIDTH-1:0]        writeMem_val,  
+    (* dont_touch = "true" *) output reg [WIDTH-1:0]        writeMem_val,  
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -32,44 +32,46 @@ module multiplier #(
 );
 
     // Stage 1: Perform 4 smaller 16x16 multiplications
-    logic signed [15:0] p00, p01, p10, p11;
+    // logic signed [15:0] p00, p01, p10, p11;
 
     // state stuff
-    state_t state, next_state;
+    (* dont_touch = "true" *) state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    reg [WIDTH-1: 0] product;
+    (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
-    logic [31:0] intermediate_sum;
-
-    logic [31:0] delay = 0;
+    // Stage 1: Perform 4 smaller 16x16 multiplications
+    logic signed [15:0] p00, p01, p10, p11;
 
     always @(posedge clk) begin
-        if (EN_mult && RDY_mult) begin
-            p00 <= mult_input0[7:0] * mult_input1[7:0];
-            p01 <= mult_input0[7:0] * mult_input1[15:8];
-            p10 <= mult_input0[15:8] * mult_input1[7:0];
-            p11 <= mult_input0[15:8] * mult_input1[15:8];
-        end
+        p00 <= mult_input0[7:0] * mult_input1[7:0];
+        p01 <= mult_input0[7:0] * mult_input1[15:8];
+        p10 <= mult_input0[15:8] * mult_input1[7:0];
+        p11 <= mult_input0[15:8] * mult_input1[15:8];
     end
 
+    // Stage 2: Add partial products with appropriate shifts
+    logic signed [63:0] intermediate_sum;
     always @(posedge clk) begin
-        intermediate_sum <= p00 + (p01 << 8) + (p10 << 8) + (p11 << 16);
+        intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
     
+    // Stage 3: Register the final output
     always @(posedge clk) begin
         product <= intermediate_sum;
     end
 
+    // multiplication logic
     always_ff @(posedge clk) begin
         writeMem_val <= product;
     end
 
     always_comb begin
+        // product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
 
@@ -114,14 +116,11 @@ module multiplier #(
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    if (delay > 4)
-                        next_state = WRITE; 
+                    next_state = WRITE;
                 end
                 else begin
                     next_state = IDLE;
                 end
-
-                delay = delay + 1;
             end
 
             WRITE: begin
@@ -217,9 +216,7 @@ module multiplier #(
                 // first_VALID_memVal = 1'b0;
 
                 // VALID_memVal = 1'b1;
-                // memVal_data <= readMem_val; 
-
-                delay = 0;               
+                // memVal_data <= readMem_val;                
                 
                 // determine next state
                 if (readMem_addr < 6'd63) begin
