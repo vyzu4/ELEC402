@@ -9,36 +9,37 @@ module multiplier #(
     parameter LOGDEPTH = 6,
     parameter WIDTH = 32
 ) (
-    input  logic                    clk,
-    input  logic                    rst,      
+    (* keep = "true" *) input  logic                    clk,
+    (* keep = "true" *) input  logic                    rst,      
 
-    input  logic                    EN_mult, // high to start multiplication
-    output logic                    EN_writeMem, // high to write to mem   
-    output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
+    (* keep = "true" *) input  logic                    EN_mult, // high to start multiplication
+    (* keep = "true" *) output logic                    EN_writeMem, // high to write to mem   
+    (* keep = "true" *) output logic [LOGDEPTH-1:0]     writeMem_addr, // addr to write to
 
-    input  logic [16-1:0]           mult_input0,
-    input  logic [16-1:0]           mult_input1,
-    output reg  [WIDTH-1:0]          writeMem_val,  // 
+    (* keep = "true" *) input  logic [16-1:0]           mult_input0,
+    (* keep = "true" *) input  logic [16-1:0]           mult_input1,
+    (* keep = "true" *) output reg  [WIDTH-1:0]          writeMem_val,  // 
 
-    output logic                    RDY_mult, // ready to multiply             
+    (* keep = "true" *) output logic                    RDY_mult, // ready to multiply             
      
-    input  logic                    EN_blockRead, // high to read from mem block           
-    output logic                    VALID_memVal, // high for valid mem val           
-    output logic [WIDTH-1:0]        memVal_data, // mem data            
+    (* keep = "true" *) input  logic                    EN_blockRead, // high to read from mem block           
+    (* keep = "true" *) output logic                    VALID_memVal, // high for valid mem val           
+    (* keep = "true" *) output logic [WIDTH-1:0]        memVal_data, // mem data            
 
-    output logic                    EN_readMem, // high to start reading mem             
-    output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
-    input  logic [WIDTH-1:0]        readMem_val // data read from mem               
+    (* keep = "true" *) output logic                    EN_readMem, // high to start reading mem             
+    (* keep = "true" *) output logic [LOGDEPTH-1:0]     readMem_addr, // addr to read from           
+    (* keep = "true" *) input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
     // state stuff
-    (* preserve = "true" *) state_t state, next_state;
+    (* keep = "true" *) state_t state;
+    (* keep = "true" *) state_t next_state;
 
     // flags
-    (* preserve = "true" *) logic first_write = 1'b0; 
-    (* preserve = "true" *) logic first_read = 1'b0; 
-    (* preserve = "true" *) logic first_VALID_memVal = 1'b0; 
+    (* keep = "true" *) logic first_write = 1'b0; 
+    (* keep = "true" *) logic first_read = 1'b0; 
+    (* keep = "true" *) logic first_VALID_memVal = 1'b0; 
 
-    (* preserve = "true" *) logic [WIDTH-1: 0] product;
+    (* keep = "true" *) logic [WIDTH-1: 0] product;
 
     // EN_writeMem = 1'b0;
     // writeMem_addr = 6'b0;
