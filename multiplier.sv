@@ -55,18 +55,17 @@ module multiplier #(
         p10 = mult_input0[15:8] * mult_input1[7:0];
         p11 = mult_input0[15:8] * mult_input1[15:8];
 
-        product = p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
+        // product = p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
     always @(negedge clk) begin
-        // product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
-        writeMem_val <= product;
+        product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
-    // // multiplication logic
-    // always_ff @(posedge clk) begin
-    //     writeMem_val <= product;
-    // end
+    // multiplication logic
+    always_ff @(posedge clk) begin
+        writeMem_val <= product;
+    end
 
     always_comb begin
         // product = mult_input0 * mult_input1;
