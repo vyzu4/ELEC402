@@ -77,12 +77,12 @@ module multiplier #(
         p11 = mult_input0[15:8] * mult_input1[15:8];
     end
 
-    always @(posedge clk, negedge clk) begin
+    always @(negedge clk) begin
         product <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
 
     // multiplication logic
-    always_ff @(posedge clk, negedge clk) begin
+    always_ff @(posedge clk) begin
         writeMem_val <= product;
     end
 
