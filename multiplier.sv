@@ -314,12 +314,12 @@ module multiplier #(
             end
 
             DELAY: begin
-                // if (delay > 4)
+                if (delay > 4)
                     next_state = WRITE;
-                // else
-                //     next_state = DELAY;
+                else
+                    next_state = DELAY;
                     
-                // delay = delay + 1;
+                delay = delay + 1;
             end
 
             WRITE: begin
