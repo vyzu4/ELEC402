@@ -305,8 +305,8 @@ module multiplier #(
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    next_state = WRITE;
-                    // next_state = DELAY;
+                    // next_state = WRITE;
+                    next_state = DELAY;
                 end
                 else begin
                     next_state = IDLE;
@@ -314,10 +314,10 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 4)
+                // if (delay > 10)
                     next_state = WRITE;
-                else
-                    next_state = DELAY;
+                // else
+                //     next_state = DELAY;
                     
                 delay = delay + 1;
             end
