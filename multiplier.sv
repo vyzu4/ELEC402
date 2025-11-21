@@ -231,17 +231,33 @@ module multiplier #(
         lvl1_6 <= spp12 + spp13;
         lvl1_7 <= spp14 + spp15;
 
-        // Level 2: 8 -> 4
+        // // Level 2: 8 -> 4
+        // lvl2_0 <= lvl1_0 + lvl1_1;
+        // lvl2_1 <= lvl1_2 + lvl1_3;
+        // lvl2_2 <= lvl1_4 + lvl1_5;
+        // lvl2_3 <= lvl1_6 + lvl1_7;
+
+        // // Level 3: 4 -> 2
+        // lvl3_0 <= lvl2_0 + lvl2_1;
+        // lvl3_1 <= lvl2_2 + lvl2_3;
+
+        // // Level 4: 2 -> 1
+        // sum_comb <= lvl3_0 + lvl3_1;
+    end
+
+    always_ff @(posedge clk) begin
         lvl2_0 <= lvl1_0 + lvl1_1;
         lvl2_1 <= lvl1_2 + lvl1_3;
         lvl2_2 <= lvl1_4 + lvl1_5;
-        lvl2_3 <= lvl1_6 + lvl1_7;
+        lvl2_3 <= lvl1_6 + lvl1_7;   
+    end
 
-        // Level 3: 4 -> 2
+    always_ff @(posedge clk) begin
         lvl3_0 <= lvl2_0 + lvl2_1;
         lvl3_1 <= lvl2_2 + lvl2_3;
+    end
 
-        // Level 4: 2 -> 1
+    always_ff @(posedge clk) begin
         sum_comb <= lvl3_0 + lvl3_1;
     end
 
