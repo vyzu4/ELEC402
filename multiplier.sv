@@ -32,9 +32,6 @@ module multiplier #(
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
 
-    // Stage 1: Perform 4 smaller 16x16 multiplications
-    // logic signed [15:0] p00, p01, p10, p11;
-
     // state stuff
     state_t state, next_state;
 
@@ -141,87 +138,34 @@ module multiplier #(
     logic [31:0] sum_comb;
 
     always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
+        if (EN_mult && RDY_mult) begin
+            // row 0
+            spp0  <= p00 << 0;   // a0*b0 * 2^0
+            spp1  <= p01 << 4;   // a0*b1 * 2^4
+            spp2  <= p02 << 8;   // a0*b2 * 2^8
+            spp3  <= p03 << 12;  // a0*b3 * 2^12
 
-        // row 0
-        spp0  <= p00 << 0;   // a0*b0 * 2^0
-        spp1  <= p01 << 4;   // a0*b1 * 2^4
-        spp2  <= p02 << 8;   // a0*b2 * 2^8
-        spp3  <= p03 << 12;  // a0*b3 * 2^12
+            // row 1
+            spp4  <= p10 << 4;   // a1*b0 * 2^4
+            spp5  <= p11 << 8;   // a1*b1 * 2^8
+            spp6  <= p12 << 12;  // a1*b2 * 2^12
+            spp7  <= p13 << 16;  // a1*b3 * 2^16
 
-        // row 1
-        spp4  <= p10 << 4;   // a1*b0 * 2^4
-        spp5  <= p11 << 8;   // a1*b1 * 2^8
-        spp6  <= p12 << 12;  // a1*b2 * 2^12
-        spp7  <= p13 << 16;  // a1*b3 * 2^16
+            // row 2
+            spp8  <= p20 << 8;   // a2*b0 * 2^8
+            spp9  <= p21 << 12;  // a2*b1 * 2^12
+            spp10 <= p22 << 16;  // a2*b2 * 2^16
+            spp11 <= p23 << 20;  // a2*b3 * 2^20
 
-        // row 2
-        spp8  <= p20 << 8;   // a2*b0 * 2^8
-        spp9  <= p21 << 12;  // a2*b1 * 2^12
-        spp10 <= p22 << 16;  // a2*b2 * 2^16
-        spp11 <= p23 << 20;  // a2*b3 * 2^20
-
-        // row 3
-        spp12 <= p30 << 12;  // a3*b0 * 2^12
-        spp13 <= p31 << 16;  // a3*b1 * 2^16
-        spp14 <= p32 << 20;  // a3*b2 * 2^20
-        spp15 <= p33 << 24;  // a3*b3 * 2^24
-
-        // // -------- explicit binary adder tree, no loops ----------
-
-        // // Level 1: 16 -> 8
-        // lvl1_0 = spp0  + spp1;
-        // lvl1_1 = spp2  + spp3;
-        // lvl1_2 = spp4  + spp5;
-        // lvl1_3 = spp6  + spp7;
-        // lvl1_4 = spp8  + spp9;
-        // lvl1_5 = spp10 + spp11;
-        // lvl1_6 = spp12 + spp13;
-        // lvl1_7 = spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 = lvl1_0 + lvl1_1;
-        // lvl2_1 = lvl1_2 + lvl1_3;
-        // lvl2_2 = lvl1_4 + lvl1_5;
-        // lvl2_3 = lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 = lvl2_0 + lvl2_1;
-        // lvl3_1 = lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb = lvl3_0 + lvl3_1;
+            // row 3
+            spp12 <= p30 << 12;  // a3*b0 * 2^12
+            spp13 <= p31 << 16;  // a3*b1 * 2^16
+            spp14 <= p32 << 20;  // a3*b2 * 2^20
+            spp15 <= p33 << 24;  // a3*b3 * 2^24
+        end
     end
+
     always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
-
-        // // row 0
-        // spp0  = p00 << 0;   // a0*b0 * 2^0
-        // spp1  = p01 << 4;   // a0*b1 * 2^4
-        // spp2  = p02 << 8;   // a0*b2 * 2^8
-        // spp3  = p03 << 12;  // a0*b3 * 2^12
-
-        // // row 1
-        // spp4  = p10 << 4;   // a1*b0 * 2^4
-        // spp5  = p11 << 8;   // a1*b1 * 2^8
-        // spp6  = p12 << 12;  // a1*b2 * 2^12
-        // spp7  = p13 << 16;  // a1*b3 * 2^16
-
-        // // row 2
-        // spp8  = p20 << 8;   // a2*b0 * 2^8
-        // spp9  = p21 << 12;  // a2*b1 * 2^12
-        // spp10 = p22 << 16;  // a2*b2 * 2^16
-        // spp11 = p23 << 20;  // a2*b3 * 2^20
-
-        // // row 3
-        // spp12 = p30 << 12;  // a3*b0 * 2^12
-        // spp13 = p31 << 16;  // a3*b1 * 2^16
-        // spp14 = p32 << 20;  // a3*b2 * 2^20
-        // spp15 = p33 << 24;  // a3*b3 * 2^24
-
-        // -------- explicit binary adder tree, no loops ----------
-
-        // Level 1: 16 -> 8
         lvl1_0 <= spp0  + spp1;
         lvl1_1 <= spp2  + spp3;
         lvl1_2 <= spp4  + spp5;
@@ -230,19 +174,6 @@ module multiplier #(
         lvl1_5 <= spp10 + spp11;
         lvl1_6 <= spp12 + spp13;
         lvl1_7 <= spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 <= lvl1_0 + lvl1_1;
-        // lvl2_1 <= lvl1_2 + lvl1_3;
-        // lvl2_2 <= lvl1_4 + lvl1_5;
-        // lvl2_3 <= lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 <= lvl2_0 + lvl2_1;
-        // lvl3_1 <= lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb <= lvl3_0 + lvl3_1;
     end
 
     always_ff @(posedge clk) begin
@@ -261,9 +192,6 @@ module multiplier #(
         sum_comb <= lvl3_0 + lvl3_1;
     end
 
-    // =========================================================================
-    // Output register
-    // =========================================================================
     always_ff @(posedge clk) begin
         product <= sum_comb;
     end
@@ -330,7 +258,7 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 0)
+                if (delay > 3)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
