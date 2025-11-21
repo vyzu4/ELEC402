@@ -330,7 +330,7 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 1)
+                if (delay > 5)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
