@@ -32,9 +32,6 @@ module multiplier #(
     input  logic [WIDTH-1:0]        readMem_val // data read from mem               
 );
 
-    // Stage 1: Perform 4 smaller 16x16 multiplications
-    // logic signed [15:0] p00, p01, p10, p11;
-
     // state stuff
     state_t state, next_state;
 
@@ -50,13 +47,15 @@ module multiplier #(
     // =========================================================================
     // Stage M0: register inputs (so later stages see aligned values)
     // =========================================================================
-    // logic [15:0] mult_input0, mult_input1;
-    // logic [15:0] mult_input0, mult_input1;  // forwarded to second multiplier stage
+    logic [15:0] a_s0, b_s0;
+    logic [15:0] a_s1, b_s1;  // forwarded to second multiplier stage
 
-    // always_ff @(posedge clk) begin
-    //     mult_input0 <= mult_input0;
-    //     mult_input1 <= mult_input1;
-    // end
+    always_ff @(negedge clk) begin
+        if (EN_mult && RDY_mult) begin
+            a_s0 <= mult_input0;
+            b_s0 <= mult_input1;
+        end
+    end
 
     // =========================================================================
     // Stage M1: first half of partial products (rows 0 and 1)
@@ -64,28 +63,25 @@ module multiplier #(
     logic [7:0] p00_s1, p01_s1, p02_s1, p03_s1;
     logic [7:0] p10_s1, p11_s1, p12_s1, p13_s1;
 
-    always_ff @(negedge clk) begin
+    always_ff @(posedge clk) begin
         // keep inputs aligned for next stage
+        a_s1 <= a_s0;
+        b_s1 <= b_s0;
 
-        if (EN_mult && RDY_mult) begin
-            // mult_input0 <= mult_input0;
-            // mult_input1 <= mult_input1;
+        // a0 = a_s0[3:0],  a1 = a_s0[7:4]
+        // b0 = b_s0[3:0],  b1 = b_s0[7:4], etc.
 
-            // a0 = mult_input0[3:0],  a1 = mult_input0[7:4]
-            // b0 = mult_input1[3:0],  b1 = mult_input1[7:4], etc.
+        // row 0 (a0 * b?)
+        p00_s1 <= a_s0[ 3: 0] * b_s0[ 3: 0]; // a0*b0
+        p01_s1 <= a_s0[ 3: 0] * b_s0[ 7: 4]; // a0*b1
+        p02_s1 <= a_s0[ 3: 0] * b_s0[11: 8]; // a0*b2
+        p03_s1 <= a_s0[ 3: 0] * b_s0[15:12]; // a0*b3
 
-            // row 0 (a0 * b?)
-            p00_s1 <= mult_input0[ 3: 0] * mult_input1[ 3: 0]; // a0*b0
-            p01_s1 <= mult_input0[ 3: 0] * mult_input1[ 7: 4]; // a0*b1
-            p02_s1 <= mult_input0[ 3: 0] * mult_input1[11: 8]; // a0*b2
-            p03_s1 <= mult_input0[ 3: 0] * mult_input1[15:12]; // a0*b3
-
-            // row 1 (a1 * b?)
-            p10_s1 <= mult_input0[ 7: 4] * mult_input1[ 3: 0]; // a1*b0
-            p11_s1 <= mult_input0[ 7: 4] * mult_input1[ 7: 4]; // a1*b1
-            p12_s1 <= mult_input0[ 7: 4] * mult_input1[11: 8]; // a1*b2
-            p13_s1 <= mult_input0[ 7: 4] * mult_input1[15:12]; // a1*b3
-        end
+        // row 1 (a1 * b?)
+        p10_s1 <= a_s0[ 7: 4] * b_s0[ 3: 0]; // a1*b0
+        p11_s1 <= a_s0[ 7: 4] * b_s0[ 7: 4]; // a1*b1
+        p12_s1 <= a_s0[ 7: 4] * b_s0[11: 8]; // a1*b2
+        p13_s1 <= a_s0[ 7: 4] * b_s0[15:12]; // a1*b3
     end
 
     // =========================================================================
@@ -109,20 +105,20 @@ module multiplier #(
         p12 <= p12_s1;
         p13 <= p13_s1;
 
-        // a2 = mult_input0[11:8], a3 = mult_input0[15:12]
-        // b0..b3 from mult_input1
+        // a2 = a_s1[11:8], a3 = a_s1[15:12]
+        // b0..b3 from b_s1
 
         // row 2 (a2 * b?)
-        p20 <= mult_input0[11: 8] * mult_input1[ 3: 0]; // a2*b0
-        p21 <= mult_input0[11: 8] * mult_input1[ 7: 4]; // a2*b1
-        p22 <= mult_input0[11: 8] * mult_input1[11: 8]; // a2*b2
-        p23 <= mult_input0[11: 8] * mult_input1[15:12]; // a2*b3
+        p20 <= a_s1[11: 8] * b_s1[ 3: 0]; // a2*b0
+        p21 <= a_s1[11: 8] * b_s1[ 7: 4]; // a2*b1
+        p22 <= a_s1[11: 8] * b_s1[11: 8]; // a2*b2
+        p23 <= a_s1[11: 8] * b_s1[15:12]; // a2*b3
 
         // row 3 (a3 * b?)
-        p30 <= mult_input0[15:12] * mult_input1[ 3: 0]; // a3*b0
-        p31 <= mult_input0[15:12] * mult_input1[ 7: 4]; // a3*b1
-        p32 <= mult_input0[15:12] * mult_input1[11: 8]; // a3*b2
-        p33 <= mult_input0[15:12] * mult_input1[15:12]; // a3*b3
+        p30 <= a_s1[15:12] * b_s1[ 3: 0]; // a3*b0
+        p31 <= a_s1[15:12] * b_s1[ 7: 4]; // a3*b1
+        p32 <= a_s1[15:12] * b_s1[11: 8]; // a3*b2
+        p33 <= a_s1[15:12] * b_s1[15:12]; // a3*b3
     end
 
     // =========================================================================
@@ -144,87 +140,34 @@ module multiplier #(
     logic [31:0] sum_comb;
 
     always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
+        // if (EN_mult && RDY_mult) begin
+            // row 0
+            spp0  <= p00 << 0;   // a0*b0 * 2^0
+            spp1  <= p01 << 4;   // a0*b1 * 2^4
+            spp2  <= p02 << 8;   // a0*b2 * 2^8
+            spp3  <= p03 << 12;  // a0*b3 * 2^12
 
-        // row 0
-        spp0  <= p00 << 0;   // a0*b0 * 2^0
-        spp1  <= p01 << 4;   // a0*b1 * 2^4
-        spp2  <= p02 << 8;   // a0*b2 * 2^8
-        spp3  <= p03 << 12;  // a0*b3 * 2^12
+            // row 1
+            spp4  <= p10 << 4;   // a1*b0 * 2^4
+            spp5  <= p11 << 8;   // a1*b1 * 2^8
+            spp6  <= p12 << 12;  // a1*b2 * 2^12
+            spp7  <= p13 << 16;  // a1*b3 * 2^16
 
-        // row 1
-        spp4  <= p10 << 4;   // a1*b0 * 2^4
-        spp5  <= p11 << 8;   // a1*b1 * 2^8
-        spp6  <= p12 << 12;  // a1*b2 * 2^12
-        spp7  <= p13 << 16;  // a1*b3 * 2^16
+            // row 2
+            spp8  <= p20 << 8;   // a2*b0 * 2^8
+            spp9  <= p21 << 12;  // a2*b1 * 2^12
+            spp10 <= p22 << 16;  // a2*b2 * 2^16
+            spp11 <= p23 << 20;  // a2*b3 * 2^20
 
-        // row 2
-        spp8  <= p20 << 8;   // a2*b0 * 2^8
-        spp9  <= p21 << 12;  // a2*b1 * 2^12
-        spp10 <= p22 << 16;  // a2*b2 * 2^16
-        spp11 <= p23 << 20;  // a2*b3 * 2^20
-
-        // row 3
-        spp12 <= p30 << 12;  // a3*b0 * 2^12
-        spp13 <= p31 << 16;  // a3*b1 * 2^16
-        spp14 <= p32 << 20;  // a3*b2 * 2^20
-        spp15 <= p33 << 24;  // a3*b3 * 2^24
-
-        // // -------- explicit binary adder tree, no loops ----------
-
-        // // Level 1: 16 -> 8
-        // lvl1_0 = spp0  + spp1;
-        // lvl1_1 = spp2  + spp3;
-        // lvl1_2 = spp4  + spp5;
-        // lvl1_3 = spp6  + spp7;
-        // lvl1_4 = spp8  + spp9;
-        // lvl1_5 = spp10 + spp11;
-        // lvl1_6 = spp12 + spp13;
-        // lvl1_7 = spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 = lvl1_0 + lvl1_1;
-        // lvl2_1 = lvl1_2 + lvl1_3;
-        // lvl2_2 = lvl1_4 + lvl1_5;
-        // lvl2_3 = lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 = lvl2_0 + lvl2_1;
-        // lvl3_1 = lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb = lvl3_0 + lvl3_1;
+            // row 3
+            spp12 <= p30 << 12;  // a3*b0 * 2^12
+            spp13 <= p31 << 16;  // a3*b1 * 2^16
+            spp14 <= p32 << 20;  // a3*b2 * 2^20
+            spp15 <= p33 << 24;  // a3*b3 * 2^24
+        // end
     end
+
     always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
-
-        // // row 0
-        // spp0  = p00 << 0;   // a0*b0 * 2^0
-        // spp1  = p01 << 4;   // a0*b1 * 2^4
-        // spp2  = p02 << 8;   // a0*b2 * 2^8
-        // spp3  = p03 << 12;  // a0*b3 * 2^12
-
-        // // row 1
-        // spp4  = p10 << 4;   // a1*b0 * 2^4
-        // spp5  = p11 << 8;   // a1*b1 * 2^8
-        // spp6  = p12 << 12;  // a1*b2 * 2^12
-        // spp7  = p13 << 16;  // a1*b3 * 2^16
-
-        // // row 2
-        // spp8  = p20 << 8;   // a2*b0 * 2^8
-        // spp9  = p21 << 12;  // a2*b1 * 2^12
-        // spp10 = p22 << 16;  // a2*b2 * 2^16
-        // spp11 = p23 << 20;  // a2*b3 * 2^20
-
-        // // row 3
-        // spp12 = p30 << 12;  // a3*b0 * 2^12
-        // spp13 = p31 << 16;  // a3*b1 * 2^16
-        // spp14 = p32 << 20;  // a3*b2 * 2^20
-        // spp15 = p33 << 24;  // a3*b3 * 2^24
-
-        // -------- explicit binary adder tree, no loops ----------
-
-        // Level 1: 16 -> 8
         lvl1_0 <= spp0  + spp1;
         lvl1_1 <= spp2  + spp3;
         lvl1_2 <= spp4  + spp5;
@@ -233,19 +176,6 @@ module multiplier #(
         lvl1_5 <= spp10 + spp11;
         lvl1_6 <= spp12 + spp13;
         lvl1_7 <= spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 <= lvl1_0 + lvl1_1;
-        // lvl2_1 <= lvl1_2 + lvl1_3;
-        // lvl2_2 <= lvl1_4 + lvl1_5;
-        // lvl2_3 <= lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 <= lvl2_0 + lvl2_1;
-        // lvl3_1 <= lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb <= lvl3_0 + lvl3_1;
     end
 
     always_ff @(posedge clk) begin
@@ -264,9 +194,6 @@ module multiplier #(
         sum_comb <= lvl3_0 + lvl3_1;
     end
 
-    // =========================================================================
-    // Output register
-    // =========================================================================
     always_ff @(posedge clk) begin
         product <= sum_comb;
     end
@@ -333,7 +260,7 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 5)
+                if (delay > 6)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
