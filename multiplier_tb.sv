@@ -94,32 +94,14 @@ task automatic generate_vectors(
     $display("stop");
 endtask
 
-// task automatic multiply(
-//     output logic EN_mult,
-//     output logic [31:0] vec0 [0:63],
-//     output logic [31:0] vec1 [0:63]
-// );
-//       #5 EN_mult = 1; // enable writing   
-//       #200; // finish multiplying
-//       #2.5 EN_mult = 0; // stop writing
-// endtask
-
   // Clock generator
   initial clk = 1;
-  // always #1.25 clk = ~clk; // 400 MHz
-  always #1.25 clk = ~clk; // 800 MHz
+  // always #1.35 clk = ~clk; // 400 MHz
+  always #0.635 clk = ~clk; // 800 MHz
 
-// Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
-// We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
-
-logic [31:0] vec0 [0:63];
-logic [31:0] vec1 [0:63];
-logic [31:0] mult_output_vector [0:63];
-
-// initial begin
-//     foreach (vec0[i]) vec0[i] = $urandom_range(16'hFFFF, 0);
-//     foreach (vec1[i]) vec1[i] = $urandom_range(16'hFFFF, 0);
-// end
+// logic [31:0] vec0 [0:63];
+// logic [31:0] vec1 [0:63];
+// logic [31:0] mult_output_vector [0:63];
 
 // drive multiplier inputs based on current writeMem_addr
 always_ff @(posedge clk) begin
@@ -129,8 +111,6 @@ end
 
   // Stimulus to fsm
   initial begin
-
-    generate_vectors(vec0, vec1, mult_output_vector);
 
     // initialize signals
     #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
