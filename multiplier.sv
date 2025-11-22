@@ -51,10 +51,10 @@ module multiplier #(
     logic [15:0] a_s1, b_s1;  // forwarded to second multiplier stage
 
     always_ff @(negedge clk) begin
-        if (EN_mult && RDY_mult) begin
+        // if (EN_mult && RDY_mult) begin
             a_s0 <= mult_input0;
             b_s0 <= mult_input1;
-        end
+        // end
     end
 
     // =========================================================================
