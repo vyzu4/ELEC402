@@ -77,52 +77,73 @@ multiplier #(
     .q(q)
   );
 
-// task automatic generate_vectors(
-//     output logic [31:0] inputs_vector [0:63],
-//     output logic [31:0] outputs_vector [0:63]
+task automatic generate_vectors(
+    output logic [31:0] vec0 [0:63],
+    output logic [31:0] vec1 [0:63],
+    output logic [31:0] outputs_vector [0:63]
+);
+    $display("start");
+    for (int i = 0; i < 64; i++) begin
+        vec0[i] = $urandom_range(64, 0);
+        vec1[i] = $urandom_range(64, 0);
+        outputs_vector[i] = vec0[i] * vec1[i];
+        $display("inputs: %0d", vec0[i]);
+        $display("inputs: %0d", vec0[i]);
+        $display("outputs: %0d", outputs_vector[i]);
+    end
+    $display("stop");
+endtask
+
+// task automatic multiply(
+//     output logic EN_mult,
+//     output logic [31:0] vec0 [0:63],
+//     output logic [31:0] vec1 [0:63]
 // );
-//     $display("start");
-//     for (int i = 0; i < 64; i++) begin
-//         inputs_vector[i] = i;
-//         outputs_vector[i] = i*i;
-//         $display("inputs: %0d", inputs_vector[i]);
-//         $display("outputs: %0d", outputs_vector[i]);
-//     end
-//     $display("stop");
+//       #5 EN_mult = 1; // enable writing   
+//       #200; // finish multiplying
+//       #2.5 EN_mult = 0; // stop writing
 // endtask
 
   // Clock generator
   initial clk = 1;
   // always #1.25 clk = ~clk; // 400 MHz
-  always #1.23 clk = ~clk; // 800 MHz
+  always #1.25 clk = ~clk; // 800 MHz
 
 // Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
 
-always_comb begin
-    // #0.1;   // 50 ps after posedge
-    mult_input0 = writeMem_addr;
-    mult_input1 = writeMem_addr;
-end
+logic [31:0] vec0 [0:63];
+logic [31:0] vec1 [0:63];
+logic [31:0] mult_output_vector [0:63];
 
-logic [31:0] inputs_vector [0:63];
-logic [31:0] outputs_vector [0:63];
+// initial begin
+//     foreach (vec0[i]) vec0[i] = $urandom_range(16'hFFFF, 0);
+//     foreach (vec1[i]) vec1[i] = $urandom_range(16'hFFFF, 0);
+// end
+
+// drive multiplier inputs based on current writeMem_addr
+always_ff @(posedge clk) begin
+    mult_input0 = $urandom_range(64, 0);  // use address as index
+    mult_input1 = $urandom_range(64, 0);
+end
 
   // Stimulus to fsm
   initial begin
+
+    generate_vectors(vec0, vec1, mult_output_vector);
+
     // initialize signals
     #1.25 rst = 1; EN_mult = 0; EN_blockRead = 0; 
     #1.25 rst = 0;
 
-    // generate_vectors(inputs_vector, outputs_vector);
-
     for (int i = 0; i < 8; i++) begin
+      #50;
       #5 EN_mult = 1; // enable writing   
-      #160; // finish multiplying
+      #200; // finish multiplying
       #2.5 EN_mult = 0; // stop writing
       #2.5 EN_blockRead = 1; // enable reading
       #2.5 EN_blockRead = 0;
-      #160; // finish reading
+      #200; // finish reading
     end
 
     $stop;
