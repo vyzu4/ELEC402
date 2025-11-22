@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 module fsm_tb #(
- //   parameter WIDTH = 32
+    parameter WIDTH = 32
 );
   // multiplier i/o
     logic                clk; // input
@@ -12,17 +12,17 @@ module fsm_tb #(
 
     logic [15:0]         mult_input0; // input
     logic [15:0]         mult_input1; // input
-    logic [32-1:0]       writeMem_val; // output 
+    logic [WIDTH-1:0]       writeMem_val; // output 
 
     logic                RDY_mult;             
      
     logic                EN_blockRead; // input           
     logic                VALID_memVal; // output           
-    logic [32-1:0]       memVal_data; // output            
+    logic [WIDTH-1:0]       memVal_data; // output            
 
     logic                EN_readMem; // output             
     logic [6-1:0]        readMem_addr; // output           
-    logic [32-1:0]       readMem_val; // input 
+    logic [WIDTH-1:0]       readMem_val; // input 
 
   /////////////////////////////////////////
 
@@ -32,8 +32,8 @@ module fsm_tb #(
     logic [6-1:0]   aB; // input  
     logic           cenA; // input  
     logic           cenB; // input  
-    logic [32-1:0]   d; // input  
-    logic [32-1:0]   q; // output  
+    logic [WIDTH-1:0]   d; // input  
+    logic [WIDTH-1:0]   q; // output  
 
 multiplier #(
   //  .WIDTH(WIDTH)
@@ -62,7 +62,7 @@ multiplier #(
 
   // Instantiate memory_wrapper_2port DUT
   memory_wrapper_2port #(
-   // .WIDTH(WIDTH)
+    .WIDTH(WIDTH)
   ) mw2p_dut (
     .clkA(clk),
     .clkB(clk),
@@ -94,7 +94,7 @@ multiplier #(
   // Clock generator
   initial clk = 1;
   // always #1.25 clk = ~clk; // 400 MHz
-  always #0.65 clk = ~clk; // 800 MHz
+  always #0.655 clk = ~clk; // 800 MHz
 
 // Clock period = 1.25 ns → negedge occurs at (period / 2) = 0.625 ns
 // We want to toggle 0.05 ns BEFORE the negedge → at 0.575 ns
@@ -117,12 +117,14 @@ logic [31:0] outputs_vector [0:63];
     // generate_vectors(inputs_vector, outputs_vector);
 
     // 
-    #5 EN_mult = 1; // enable writing   
-    #180; // finish multiplying
-    #1.25 EN_mult = 0; // stop writing
-    #1.25 EN_blockRead = 1; // enable reading
-    #1.25 EN_blockRead = 0;
-    #180; // finish reading
+    for (int i = 0; i < 8; i++) begin
+      #5 EN_mult = 1; // enable writing   
+      #180; // finish multiplying
+      #1.25 EN_mult = 0; // stop writing
+      #1.25 EN_blockRead = 1; // enable reading
+      #1.25 EN_blockRead = 0;
+      #180; // finish reading
+    end
     // 
 
 
