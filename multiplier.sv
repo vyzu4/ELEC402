@@ -305,22 +305,22 @@ module multiplier #(
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    next_state = DELAY;
-                    // next_state = WRITE;
+                    // next_state = DELAY;
+                    next_state = WRITE;
                 end
                 else begin
                     next_state = IDLE;
                 end
             end
 
-            DELAY: begin
-                if (delay > 7)
-                    next_state = WRITE;
-                else
-                    next_state = DELAY;
+            // DELAY: begin
+            //     if (delay > 7)
+            //         next_state = WRITE;
+            //     else
+            //         next_state = DELAY;
 
-                delay = delay + 1;
-            end
+            //     delay = delay + 1;
+            // end
 
             WRITE: begin
                 // initialize write signals
