@@ -42,6 +42,7 @@ module multiplier #(
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
+    logic vicky = 1'b0; 
 
     (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
@@ -51,12 +52,15 @@ module multiplier #(
 
     logic signed [3:0] delay = 4'b0;
 
-    always @(negedge clk) begin
-        if (EN_mult && RDY_mult) begin
-            p00 <= mult_input0[7:0] * mult_input1[7:0];
-            p01 <= mult_input0[7:0] * mult_input1[15:8];
-            p10 <= mult_input0[15:8] * mult_input1[7:0];
-            p11 <= mult_input0[15:8] * mult_input1[15:8];
+    always @(posedge clk) begin
+        if (EN_mult == 1 && RDY_mult == 1) begin
+            if (vicky) begin
+                p00 <= mult_input0[7:0] * mult_input1[7:0];
+                p01 <= mult_input0[7:0] * mult_input1[15:8];
+                p10 <= mult_input0[15:8] * mult_input1[7:0];
+                p11 <= mult_input0[15:8] * mult_input1[15:8];
+            end
+            vicky = 1'b1;
         end
     end
 
@@ -127,10 +131,12 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 0)
+                if (delay > 1)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
+
+                // next_state = WRITE;
                     
                 delay = delay + 1;
             end
