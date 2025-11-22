@@ -316,8 +316,8 @@ module multiplier #(
             DELAY: begin
                 if (delay > 7)
                     next_state = WRITE;
-                else
-                    next_state = DELAY;
+                // else
+                //     next_state = DELAY;
 
                 delay = delay + 1;
 
