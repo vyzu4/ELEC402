@@ -51,7 +51,7 @@ module multiplier #(
 
     logic signed [3:0] delay = 4'b0;
     
-    logic signed vicky = 1'b0;
+    logic vicky = 1'b0;
 
     always @(posedge clk) begin
         if (EN_mult && RDY_mult) begin
