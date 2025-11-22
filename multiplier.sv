@@ -45,23 +45,26 @@ module multiplier #(
 
     (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
+    logic signed [15:0] in0, in1;
     logic signed [15:0] p00, p01, p10, p11;
 
     logic signed [31:0] intermediate_sum;
 
     logic signed [3:0] delay = 4'b0;
     
-    logic vicky = 1'b0;
+    // logic vicky = 1'b0;
+
+    always @(posedge clk) begin
+        in0 <= mult_input0;
+        in1 <= mult_input1;
+    end
 
     always @(posedge clk) begin
         if (EN_mult && RDY_mult) begin
-            if (vicky) begin
-                p00 <= mult_input0[7:0] * mult_input1[7:0];
-                p01 <= mult_input0[7:0] * mult_input1[15:8];
-                p10 <= mult_input0[15:8] * mult_input1[7:0];
-                p11 <= mult_input0[15:8] * mult_input1[15:8];
-            end
-            vicky = 1'b1;
+            p00 <= in0[7:0] * in1[7:0];
+            p01 <= in0[7:0] * in1[15:8];
+            p10 <= in0[15:8] * in1[7:0];
+            p11 <= in0[15:8] * in1[15:8];
         end
     end
 
