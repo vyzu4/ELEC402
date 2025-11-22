@@ -2,8 +2,7 @@ typedef enum logic [2:0] {
     IDLE  = 3'b000,
     WRITE = 3'b001,
     FULL =  3'b010,
-    READ = 3'b011,
-    DELAY = 3'b100
+    READ = 3'b011
 } state_t;
 
 module multiplier #(    
@@ -42,7 +41,6 @@ module multiplier #(
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
-    logic [3:0] delay = 4'b0; 
 
     (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
@@ -298,27 +296,15 @@ module multiplier #(
                 // readMem_addr = 1'b0;
                 VALID_memVal = 1'b0; 
 
-                delay = 4'b0;
-
                 // determine next state
                 if (EN_mult == 1'b1) begin
                     // EN_writeMem = 1'b1;
                     // state = WRITE;
-                    next_state = DELAY;
-                    // next_state = WRITE;
+                    next_state = WRITE;
                 end
                 else begin
                     next_state = IDLE;
                 end
-            end
-
-            DELAY: begin
-                if (delay > 7) 
-                    next_state = WRITE;
-                else
-                    next_state = DELAY;
-
-                delay = delay + 1;
             end
 
             WRITE: begin
