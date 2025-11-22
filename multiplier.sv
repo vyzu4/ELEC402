@@ -19,7 +19,7 @@ module multiplier #(
 
     input  logic [16-1:0]           mult_input0,
     input  logic [16-1:0]           mult_input1,
-    output reg [WIDTH-1:0]        writeMem_val,  
+    (* dont_touch = "true" *) output reg [WIDTH-1:0]        writeMem_val,  
 
     output logic                    RDY_mult, // ready to multiply             
      
@@ -36,248 +36,43 @@ module multiplier #(
     // logic signed [15:0] p00, p01, p10, p11;
 
     // state stuff
-    state_t state, next_state;
+    (* dont_touch = "true" *) state_t state, next_state;
 
     // flags
     logic first_write = 1'b0; 
     logic first_read = 1'b0; 
     logic first_VALID_memVal = 1'b0; 
 
-    logic [3:0] delay = 4'b0; 
+    (* dont_touch = "true" *) reg [WIDTH-1: 0] product;
 
-    reg [WIDTH-1: 0] product;
+    logic signed [15:0] p00, p01, p10, p11;
 
-    // =========================================================================
-    // Stage M0: register inputs (so later stages see aligned values)
-    // =========================================================================
-    // logic [15:0] mult_input0, mult_input1;
-    // logic [15:0] mult_input0, mult_input1;  // forwarded to second multiplier stage
+    logic signed [31:0] intermediate_sum;
 
-    // always_ff @(posedge clk) begin
-    //     mult_input0 <= mult_input0;
-    //     mult_input1 <= mult_input1;
-    // end
+    logic signed [3:0] delay = 4'b0;
 
-    // =========================================================================
-    // Stage M1: first half of partial products (rows 0 and 1)
-    // =========================================================================
-    logic [7:0] p00_s1, p01_s1, p02_s1, p03_s1;
-    logic [7:0] p10_s1, p11_s1, p12_s1, p13_s1;
-
-    always_ff @(negedge clk) begin
-        // keep inputs aligned for next stage
-
+    always @(negedge clk) begin
         if (EN_mult && RDY_mult) begin
-            // mult_input0 <= mult_input0;
-            // mult_input1 <= mult_input1;
-
-            // a0 = mult_input0[3:0],  a1 = mult_input0[7:4]
-            // b0 = mult_input1[3:0],  b1 = mult_input1[7:4], etc.
-
-            // row 0 (a0 * b?)
-            p00_s1 <= mult_input0[ 3: 0] * mult_input1[ 3: 0]; // a0*b0
-            p01_s1 <= mult_input0[ 3: 0] * mult_input1[ 7: 4]; // a0*b1
-            p02_s1 <= mult_input0[ 3: 0] * mult_input1[11: 8]; // a0*b2
-            p03_s1 <= mult_input0[ 3: 0] * mult_input1[15:12]; // a0*b3
-
-            // row 1 (a1 * b?)
-            p10_s1 <= mult_input0[ 7: 4] * mult_input1[ 3: 0]; // a1*b0
-            p11_s1 <= mult_input0[ 7: 4] * mult_input1[ 7: 4]; // a1*b1
-            p12_s1 <= mult_input0[ 7: 4] * mult_input1[11: 8]; // a1*b2
-            p13_s1 <= mult_input0[ 7: 4] * mult_input1[15:12]; // a1*b3
+            p00 <= mult_input0[7:0] * mult_input1[7:0];
+            p01 <= mult_input0[7:0] * mult_input1[15:8];
+            p10 <= mult_input0[15:8] * mult_input1[7:0];
+            p11 <= mult_input0[15:8] * mult_input1[15:8];
         end
     end
 
-    // =========================================================================
-    // Stage M2: second half of partial products (rows 2 and 3),
-    //           and align first-half partials into this stage
-    // =========================================================================
-    logic [7:0] p00, p01, p02, p03;
-    logic [7:0] p10, p11, p12, p13;
-    logic [7:0] p20, p21, p22, p23;
-    logic [7:0] p30, p31, p32, p33;
-
-    always_ff @(posedge clk) begin
-        // forward first-half partials so all 16 are aligned in this stage
-        p00 <= p00_s1;
-        p01 <= p01_s1;
-        p02 <= p02_s1;
-        p03 <= p03_s1;
-
-        p10 <= p10_s1;
-        p11 <= p11_s1;
-        p12 <= p12_s1;
-        p13 <= p13_s1;
-
-        // a2 = mult_input0[11:8], a3 = mult_input0[15:12]
-        // b0..b3 from mult_input1
-
-        // row 2 (a2 * b?)
-        p20 <= mult_input0[11: 8] * mult_input1[ 3: 0]; // a2*b0
-        p21 <= mult_input0[11: 8] * mult_input1[ 7: 4]; // a2*b1
-        p22 <= mult_input0[11: 8] * mult_input1[11: 8]; // a2*b2
-        p23 <= mult_input0[11: 8] * mult_input1[15:12]; // a2*b3
-
-        // row 3 (a3 * b?)
-        p30 <= mult_input0[15:12] * mult_input1[ 3: 0]; // a3*b0
-        p31 <= mult_input0[15:12] * mult_input1[ 7: 4]; // a3*b1
-        p32 <= mult_input0[15:12] * mult_input1[11: 8]; // a3*b2
-        p33 <= mult_input0[15:12] * mult_input1[15:12]; // a3*b3
-    end
-
-    // =========================================================================
-    // Combinational: shift partial products + explicit adder tree (no loops)
-    // =========================================================================
-
-    // Shifted partial products (32-bit)
-    logic [31:0] spp0,  spp1,  spp2,  spp3;
-    logic [31:0] spp4,  spp5,  spp6,  spp7;
-    logic [31:0] spp8,  spp9,  spp10, spp11;
-    logic [31:0] spp12, spp13, spp14, spp15;
-
-    // Tree levels
-    logic [31:0] lvl1_0, lvl1_1, lvl1_2, lvl1_3;
-    logic [31:0] lvl1_4, lvl1_5, lvl1_6, lvl1_7;
-
-    logic [31:0] lvl2_0, lvl2_1, lvl2_2, lvl2_3;
-    logic [31:0] lvl3_0, lvl3_1;
-    logic [31:0] sum_comb;
-
-    always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
-
-        // row 0
-        spp0  <= p00 << 0;   // a0*b0 * 2^0
-        spp1  <= p01 << 4;   // a0*b1 * 2^4
-        spp2  <= p02 << 8;   // a0*b2 * 2^8
-        spp3  <= p03 << 12;  // a0*b3 * 2^12
-
-        // row 1
-        spp4  <= p10 << 4;   // a1*b0 * 2^4
-        spp5  <= p11 << 8;   // a1*b1 * 2^8
-        spp6  <= p12 << 12;  // a1*b2 * 2^12
-        spp7  <= p13 << 16;  // a1*b3 * 2^16
-
-        // row 2
-        spp8  <= p20 << 8;   // a2*b0 * 2^8
-        spp9  <= p21 << 12;  // a2*b1 * 2^12
-        spp10 <= p22 << 16;  // a2*b2 * 2^16
-        spp11 <= p23 << 20;  // a2*b3 * 2^20
-
-        // row 3
-        spp12 <= p30 << 12;  // a3*b0 * 2^12
-        spp13 <= p31 << 16;  // a3*b1 * 2^16
-        spp14 <= p32 << 20;  // a3*b2 * 2^20
-        spp15 <= p33 << 24;  // a3*b3 * 2^24
-
-        // // -------- explicit binary adder tree, no loops ----------
-
-        // // Level 1: 16 -> 8
-        // lvl1_0 = spp0  + spp1;
-        // lvl1_1 = spp2  + spp3;
-        // lvl1_2 = spp4  + spp5;
-        // lvl1_3 = spp6  + spp7;
-        // lvl1_4 = spp8  + spp9;
-        // lvl1_5 = spp10 + spp11;
-        // lvl1_6 = spp12 + spp13;
-        // lvl1_7 = spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 = lvl1_0 + lvl1_1;
-        // lvl2_1 = lvl1_2 + lvl1_3;
-        // lvl2_2 = lvl1_4 + lvl1_5;
-        // lvl2_3 = lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 = lvl2_0 + lvl2_1;
-        // lvl3_1 = lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb = lvl3_0 + lvl3_1;
-    end
-    always_ff @(posedge clk) begin
-        // shift amount = 4 * (i + j) for p_ij
-
-        // // row 0
-        // spp0  = p00 << 0;   // a0*b0 * 2^0
-        // spp1  = p01 << 4;   // a0*b1 * 2^4
-        // spp2  = p02 << 8;   // a0*b2 * 2^8
-        // spp3  = p03 << 12;  // a0*b3 * 2^12
-
-        // // row 1
-        // spp4  = p10 << 4;   // a1*b0 * 2^4
-        // spp5  = p11 << 8;   // a1*b1 * 2^8
-        // spp6  = p12 << 12;  // a1*b2 * 2^12
-        // spp7  = p13 << 16;  // a1*b3 * 2^16
-
-        // // row 2
-        // spp8  = p20 << 8;   // a2*b0 * 2^8
-        // spp9  = p21 << 12;  // a2*b1 * 2^12
-        // spp10 = p22 << 16;  // a2*b2 * 2^16
-        // spp11 = p23 << 20;  // a2*b3 * 2^20
-
-        // // row 3
-        // spp12 = p30 << 12;  // a3*b0 * 2^12
-        // spp13 = p31 << 16;  // a3*b1 * 2^16
-        // spp14 = p32 << 20;  // a3*b2 * 2^20
-        // spp15 = p33 << 24;  // a3*b3 * 2^24
-
-        // -------- explicit binary adder tree, no loops ----------
-
-        // Level 1: 16 -> 8
-        lvl1_0 <= spp0  + spp1;
-        lvl1_1 <= spp2  + spp3;
-        lvl1_2 <= spp4  + spp5;
-        lvl1_3 <= spp6  + spp7;
-        lvl1_4 <= spp8  + spp9;
-        lvl1_5 <= spp10 + spp11;
-        lvl1_6 <= spp12 + spp13;
-        lvl1_7 <= spp14 + spp15;
-
-        // // Level 2: 8 -> 4
-        // lvl2_0 <= lvl1_0 + lvl1_1;
-        // lvl2_1 <= lvl1_2 + lvl1_3;
-        // lvl2_2 <= lvl1_4 + lvl1_5;
-        // lvl2_3 <= lvl1_6 + lvl1_7;
-
-        // // Level 3: 4 -> 2
-        // lvl3_0 <= lvl2_0 + lvl2_1;
-        // lvl3_1 <= lvl2_2 + lvl2_3;
-
-        // // Level 4: 2 -> 1
-        // sum_comb <= lvl3_0 + lvl3_1;
-    end
-
-    always_ff @(posedge clk) begin
-        lvl2_0 <= lvl1_0 + lvl1_1;
-        lvl2_1 <= lvl1_2 + lvl1_3;
-        lvl2_2 <= lvl1_4 + lvl1_5;
-        lvl2_3 <= lvl1_6 + lvl1_7;   
-    end
-
-    always_ff @(posedge clk) begin
-        lvl3_0 <= lvl2_0 + lvl2_1;
-        lvl3_1 <= lvl2_2 + lvl2_3;
-    end
-
-    always_ff @(posedge clk) begin
-        sum_comb <= lvl3_0 + lvl3_1;
-    end
-
-    // =========================================================================
-    // Output register
-    // =========================================================================
-    always_ff @(posedge clk) begin
-        product <= sum_comb;
+    always @(posedge clk) begin
+        intermediate_sum <= p00 + (p01 << 16) + (p10 << 16) + (p11 << 32);
     end
     
-    // multiplication logic
+    always @(posedge clk) begin
+        product <= intermediate_sum;
+    end
+
     always_ff @(posedge clk) begin
         writeMem_val <= product;
     end
 
     always_comb begin
-        // product = mult_input0 * mult_input1;
         memVal_data = readMem_val;   
     end
 
@@ -314,26 +109,25 @@ module multiplier #(
                 writeMem_addr = 1'b0;
                 EN_writeMem = 1'b0;
 
-                delay = 4'b0;
-
                 // // initialize write signals
                 // readMem_addr = 1'b0;
                 VALID_memVal = 1'b0; 
 
+                delay = 4'b0;
+
                 // determine next state
                 if (EN_mult == 1'b1) begin
-                    // EN_writeMem = 1'b1;
-                    // state = WRITE;
-                    // next_state = WRITE;
                     next_state = DELAY;
+                    // next_state = WRITE;
                 end
                 else begin
                     next_state = IDLE;
                 end
+
             end
 
             DELAY: begin
-                if (delay > 5)
+                if (delay > 0)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
@@ -434,7 +228,8 @@ module multiplier #(
                 // first_VALID_memVal = 1'b0;
 
                 // VALID_memVal = 1'b1;
-                // memVal_data <= readMem_val;                
+                // memVal_data <= readMem_val;  
+                delay = 0;              
                 
                 // determine next state
                 if (readMem_addr < 6'd63) begin
@@ -462,6 +257,8 @@ module multiplier #(
 
                 // readMem_addr = !first_read ?  1'b0 : readMem_addr + 1;
                 // first_read = 1'b1;
+
+                delay = 4'b0;
 
             end
 
