@@ -50,13 +50,13 @@ module multiplier #(
     // =========================================================================
     // Stage M0: register inputs (so later stages see aligned values)
     // =========================================================================
-    logic [15:0] a_s0, b_s0;
-    logic [15:0] a_s1, b_s1;  // forwarded to second multiplier stage
+    // logic [15:0] mult_input0, mult_input1;
+    // logic [15:0] mult_input0, mult_input1;  // forwarded to second multiplier stage
 
-    always_ff @(posedge clk) begin
-        a_s0 <= mult_input0;
-        b_s0 <= mult_input1;
-    end
+    // always_ff @(posedge clk) begin
+    //     mult_input0 <= mult_input0;
+    //     mult_input1 <= mult_input1;
+    // end
 
     // =========================================================================
     // Stage M1: first half of partial products (rows 0 and 1)
@@ -64,25 +64,28 @@ module multiplier #(
     logic [7:0] p00_s1, p01_s1, p02_s1, p03_s1;
     logic [7:0] p10_s1, p11_s1, p12_s1, p13_s1;
 
-    always_ff @(posedge clk) begin
+    always_ff @(negedge clk) begin
         // keep inputs aligned for next stage
-        a_s1 <= a_s0;
-        b_s1 <= b_s0;
 
-        // a0 = a_s0[3:0],  a1 = a_s0[7:4]
-        // b0 = b_s0[3:0],  b1 = b_s0[7:4], etc.
+        if (EN_mult && RDY_mult) begin
+            // mult_input0 <= mult_input0;
+            // mult_input1 <= mult_input1;
 
-        // row 0 (a0 * b?)
-        p00_s1 <= a_s0[ 3: 0] * b_s0[ 3: 0]; // a0*b0
-        p01_s1 <= a_s0[ 3: 0] * b_s0[ 7: 4]; // a0*b1
-        p02_s1 <= a_s0[ 3: 0] * b_s0[11: 8]; // a0*b2
-        p03_s1 <= a_s0[ 3: 0] * b_s0[15:12]; // a0*b3
+            // a0 = mult_input0[3:0],  a1 = mult_input0[7:4]
+            // b0 = mult_input1[3:0],  b1 = mult_input1[7:4], etc.
 
-        // row 1 (a1 * b?)
-        p10_s1 <= a_s0[ 7: 4] * b_s0[ 3: 0]; // a1*b0
-        p11_s1 <= a_s0[ 7: 4] * b_s0[ 7: 4]; // a1*b1
-        p12_s1 <= a_s0[ 7: 4] * b_s0[11: 8]; // a1*b2
-        p13_s1 <= a_s0[ 7: 4] * b_s0[15:12]; // a1*b3
+            // row 0 (a0 * b?)
+            p00_s1 <= mult_input0[ 3: 0] * mult_input1[ 3: 0]; // a0*b0
+            p01_s1 <= mult_input0[ 3: 0] * mult_input1[ 7: 4]; // a0*b1
+            p02_s1 <= mult_input0[ 3: 0] * mult_input1[11: 8]; // a0*b2
+            p03_s1 <= mult_input0[ 3: 0] * mult_input1[15:12]; // a0*b3
+
+            // row 1 (a1 * b?)
+            p10_s1 <= mult_input0[ 7: 4] * mult_input1[ 3: 0]; // a1*b0
+            p11_s1 <= mult_input0[ 7: 4] * mult_input1[ 7: 4]; // a1*b1
+            p12_s1 <= mult_input0[ 7: 4] * mult_input1[11: 8]; // a1*b2
+            p13_s1 <= mult_input0[ 7: 4] * mult_input1[15:12]; // a1*b3
+        end
     end
 
     // =========================================================================
@@ -106,20 +109,20 @@ module multiplier #(
         p12 <= p12_s1;
         p13 <= p13_s1;
 
-        // a2 = a_s1[11:8], a3 = a_s1[15:12]
-        // b0..b3 from b_s1
+        // a2 = mult_input0[11:8], a3 = mult_input0[15:12]
+        // b0..b3 from mult_input1
 
         // row 2 (a2 * b?)
-        p20 <= a_s1[11: 8] * b_s1[ 3: 0]; // a2*b0
-        p21 <= a_s1[11: 8] * b_s1[ 7: 4]; // a2*b1
-        p22 <= a_s1[11: 8] * b_s1[11: 8]; // a2*b2
-        p23 <= a_s1[11: 8] * b_s1[15:12]; // a2*b3
+        p20 <= mult_input0[11: 8] * mult_input1[ 3: 0]; // a2*b0
+        p21 <= mult_input0[11: 8] * mult_input1[ 7: 4]; // a2*b1
+        p22 <= mult_input0[11: 8] * mult_input1[11: 8]; // a2*b2
+        p23 <= mult_input0[11: 8] * mult_input1[15:12]; // a2*b3
 
         // row 3 (a3 * b?)
-        p30 <= a_s1[15:12] * b_s1[ 3: 0]; // a3*b0
-        p31 <= a_s1[15:12] * b_s1[ 7: 4]; // a3*b1
-        p32 <= a_s1[15:12] * b_s1[11: 8]; // a3*b2
-        p33 <= a_s1[15:12] * b_s1[15:12]; // a3*b3
+        p30 <= mult_input0[15:12] * mult_input1[ 3: 0]; // a3*b0
+        p31 <= mult_input0[15:12] * mult_input1[ 7: 4]; // a3*b1
+        p32 <= mult_input0[15:12] * mult_input1[11: 8]; // a3*b2
+        p33 <= mult_input0[15:12] * mult_input1[15:12]; // a3*b3
     end
 
     // =========================================================================
@@ -330,7 +333,7 @@ module multiplier #(
             end
 
             DELAY: begin
-                if (delay > 0)
+                if (delay > 5)
                     next_state = WRITE;
                 else
                     next_state = DELAY;
